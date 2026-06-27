@@ -142,9 +142,9 @@ function OvernightFields({
           {PICKUP_SLOTS.map((slot) => {
             const note = !slot.needsHalfDay
               ? '追加なし'
-              : slot.overtimeHours === 0
+              : slot.overtimeFee === 0
                 ? '半日分を加算'
-                : `半日分 ＋ 延長${slot.overtimeHours}時間分`;
+                : `半日分 ＋ 夜間¥${slot.overtimeFee.toLocaleString('ja-JP')}`;
             return (
               <PickupOption
                 key={slot.id}

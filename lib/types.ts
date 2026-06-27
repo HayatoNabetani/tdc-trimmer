@@ -4,16 +4,11 @@ export type DogSize = 'small' | 'medium' | 'large' | 'xlarge';
 export type StayType = 'daycare' | 'overnight';
 
 // お迎え時間帯のスロットID（実体は pricing.ts の PICKUP_SLOTS で定義）
-// by12   : 〜12:00（追加なし）
-// by18   : 12:00〜18:00（半日分加算）
-// over18_* : 18:00以降（半日分 ＋ 1時間ごと延長料金、最終22:00）
-export type PickupSlotId =
-  | 'by12'
-  | 'by18'
-  | 'over18_1'
-  | 'over18_2'
-  | 'over18_3'
-  | 'over18_4';
+// by12 : 〜12:00（追加なし）
+// by18 : 12:00〜18:00（半日分加算）
+// by20 : 18:00〜20:00（半日分 ＋ ¥1,500）
+// by22 : 20:00〜22:00（半日分 ＋ ¥3,000、最終）
+export type PickupSlotId = 'by12' | 'by18' | 'by20' | 'by22';
 
 // 料金計算の対象になるサイズ（xlarge は要お問い合わせのため除外）
 export type PricedSize = Exclude<DogSize, 'xlarge'>;
@@ -40,7 +35,7 @@ export interface PickupSlot {
   id: PickupSlotId;
   label: string; // 'お迎え 〜12:00' など
   needsHalfDay: boolean; // 半日分を加算するか
-  overtimeHours: number; // 18:00以降の延長時間数（×時間単価）
+  overtimeFee: number; // 18:00以降の夜間定額（0なら未適用）
 }
 
 // 特別料金期間（繁忙期・特定日）

@@ -36,18 +36,13 @@ export function halfDayBase(perNight: number): number {
 // 大型犬の 1泊料金は「10,000円〜」の下限表示
 export const LARGE_IS_FROM = true;
 
-// 18:00以降の延長料金（1時間ごと）
-export const OVERTIME_HOURLY = 1100;
-
 // お迎え時間帯のスロット定義
-// 12:00超 → 半日分加算 / 18:00以降 → さらに1時間ごと延長料金
+// 12:00超 → 半日分加算 / 18:00以降 → さらに夜間定額（2時間枠）
 export const PICKUP_SLOTS: PickupSlot[] = [
-  { id: 'by12', label: '〜12:00', needsHalfDay: false, overtimeHours: 0 },
-  { id: 'by18', label: '12:00〜18:00', needsHalfDay: true, overtimeHours: 0 },
-  { id: 'over18_1', label: '18:00〜19:00', needsHalfDay: true, overtimeHours: 1 },
-  { id: 'over18_2', label: '19:00〜20:00', needsHalfDay: true, overtimeHours: 2 },
-  { id: 'over18_3', label: '20:00〜21:00', needsHalfDay: true, overtimeHours: 3 },
-  { id: 'over18_4', label: '21:00〜22:00', needsHalfDay: true, overtimeHours: 4 },
+  { id: 'by12', label: '〜12:00', needsHalfDay: false, overtimeFee: 0 },
+  { id: 'by18', label: '12:00〜18:00', needsHalfDay: true, overtimeFee: 0 },
+  { id: 'by20', label: '18:00〜20:00', needsHalfDay: true, overtimeFee: 1500 },
+  { id: 'by22', label: '20:00〜22:00', needsHalfDay: true, overtimeFee: 3000 },
 ];
 
 export function findPickupSlot(id?: string): PickupSlot | null {
@@ -151,13 +146,12 @@ export function calcEstimate(
       halfDayFee = halfDayBase(rule.perNight);
     }
   }
-  const overtimeFee = slot.overtimeHours * OVERTIME_HOURLY;
+  const overtimeFee = slot.overtimeFee;
   const total = base + halfDayFee + overtimeFee;
 
-  // ラベル：◯泊（＋半 / ＋延長Nh）
+  // ラベル：◯泊（半日加算ありなら「半」）。夜間料金はスロット表示で伝える。
   let label = `${dates.length}泊`;
   if (slot.needsHalfDay) label += '半';
-  if (slot.overtimeHours > 0) label += `＋延長${slot.overtimeHours}h`;
 
   return {
     needsContact: false,

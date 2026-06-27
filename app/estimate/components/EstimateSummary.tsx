@@ -95,7 +95,7 @@ export function EstimateSummary({
                   )}
                   {result.overtimeFee > 0 && (
                     <li className="flex justify-between tabular-nums">
-                      <span>延長料金（18:00以降）</span>
+                      <span>夜間料金（18:00以降のお迎え）</span>
                       <span>{yen(result.overtimeFee)}</span>
                     </li>
                   )}

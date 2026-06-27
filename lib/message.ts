@@ -75,7 +75,7 @@ export function buildMessage(
     lines.push(`　・半日加算（12:00超のお迎え）：${yen(result.halfDayFee)}`);
   }
   if (result.overtimeFee > 0) {
-    lines.push(`　・延長料金（18:00以降）：${yen(result.overtimeFee)}`);
+    lines.push(`　・夜間料金（18:00以降のお迎え）：${yen(result.overtimeFee)}`);
   }
 
   lines.push(
