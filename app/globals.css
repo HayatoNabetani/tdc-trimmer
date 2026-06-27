@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7f7f5;
+  --foreground: #1f2937;
+}
+
+html,
+body {
+  background: var(--background);
+  color: var(--foreground);
+  -webkit-text-size-adjust: 100%;
+}
+
+/* iOS Safari の date input を他要素と揃える */
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+}
