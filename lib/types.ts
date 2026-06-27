@@ -6,8 +6,14 @@ export type StayType = 'daycare' | 'overnight';
 // お迎え時間帯のスロットID（実体は pricing.ts の PICKUP_SLOTS で定義）
 // by12   : 〜12:00（追加なし）
 // by18   : 12:00〜18:00（半日分加算）
-// over18_* : 18:00以降（半日分 ＋ 1時間ごと延長料金）
-export type PickupSlotId = 'by12' | 'by18' | 'over18_1' | 'over18_2' | 'over18_3';
+// over18_* : 18:00以降（半日分 ＋ 1時間ごと延長料金、最終22:00）
+export type PickupSlotId =
+  | 'by12'
+  | 'by18'
+  | 'over18_1'
+  | 'over18_2'
+  | 'over18_3'
+  | 'over18_4';
 
 // 料金計算の対象になるサイズ（xlarge は要お問い合わせのため除外）
 export type PricedSize = Exclude<DogSize, 'xlarge'>;
@@ -24,7 +30,7 @@ export interface EstimateInput {
 export interface PriceRule {
   daycare: number | null; // 日帰り料金（大型犬は日帰りなし → null）
   perNight: number; // 1泊（お預かり日〜翌日12:00）
-  halfDay: number; // 12:00超のお迎えで加算する半日分
+  // 半日分（12:00超のお迎えで加算）＝ 1泊料金の半額。perNightから算出するためフィールドは持たない。
 }
 
 export type PriceTable = Record<PricedSize, PriceRule>;

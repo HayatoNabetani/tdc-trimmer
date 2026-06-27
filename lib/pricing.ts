@@ -21,13 +21,17 @@ import { SPECIAL_PERIODS } from './specialPricing';
 // 通常料金テーブル（クライアント提供の料金表より）
 // - 1泊 ＝ お預かり日〜翌日12:00
 // - 大型犬は日帰りなし（daycare: null）。1泊は「10,000円〜」の下限値
-// - ⚠️ halfDay（12:00超のお迎えで加算する半日分）の金額は未提示のため暫定。
-//   暫定で「日帰り料金」を半日分とみなして設定。大型は日帰りが無いため暫定値。→ 要確認
+// - 半日分（12:00超のお迎え）＝ 1泊料金の半額（halfDayFee()で算出）
 export const PRICE_TABLE: PriceTable = {
-  small: { daycare: 3300, perNight: 4950, halfDay: 3300 },
-  medium: { daycare: 3800, perNight: 7700, halfDay: 3800 },
-  large: { daycare: null, perNight: 10000, halfDay: 5000 }, // halfDay 暫定・要確認
+  small: { daycare: 3300, perNight: 4950 },
+  medium: { daycare: 3800, perNight: 7700 },
+  large: { daycare: null, perNight: 10000 },
 };
+
+// 半日分 ＝ 1泊料金の半額
+export function halfDayBase(perNight: number): number {
+  return Math.round(perNight / 2);
+}
 
 // 大型犬の 1泊料金は「10,000円〜」の下限表示
 export const LARGE_IS_FROM = true;
@@ -43,6 +47,7 @@ export const PICKUP_SLOTS: PickupSlot[] = [
   { id: 'over18_1', label: '18:00〜19:00', needsHalfDay: true, overtimeHours: 1 },
   { id: 'over18_2', label: '19:00〜20:00', needsHalfDay: true, overtimeHours: 2 },
   { id: 'over18_3', label: '20:00〜21:00', needsHalfDay: true, overtimeHours: 3 },
+  { id: 'over18_4', label: '21:00〜22:00', needsHalfDay: true, overtimeHours: 4 },
 ];
 
 export function findPickupSlot(id?: string): PickupSlot | null {
@@ -93,10 +98,21 @@ export function calcEstimate(
   const size = input.size;
   const rule = table[size];
 
-  // 日帰り（特別料金適用は運用次第。v1は通常料金。大型は日帰り無し）
+  // 日帰り（大型は日帰り無し）。利用日が特別期間内なら +特別料金。
   if (input.stayType === 'daycare') {
     if (rule.daycare == null) return empty();
-    return { ...empty(), total: rule.daycare, label: '日帰り' };
+    let total = rule.daycare;
+    let hasSpecial = false;
+    if (input.daycareDate) {
+      const sp = findSpecial(input.daycareDate, specials);
+      if (sp) {
+        hasSpecial = true;
+        if (sp.daycare?.[size] != null) total = sp.daycare[size];
+        else if (sp.surcharge?.[size] != null)
+          total = rule.daycare + sp.surcharge[size];
+      }
+    }
+    return { ...empty(), total, label: '日帰り', hasSpecial };
   }
 
   // 宿泊
@@ -121,7 +137,20 @@ export function calcEstimate(
     return { date, amount, label: sp?.name ?? '通常', isSpecial };
   });
 
-  const halfDayFee = slot.needsHalfDay ? rule.halfDay : 0;
+  // 半日分 ＝ 1泊料金の半額。チェックアウト日が特別期間なら特別料金を反映。
+  let halfDayFee = 0;
+  if (slot.needsHalfDay) {
+    const spOut = findSpecial(input.checkOut, specials);
+    if (spOut?.perNight?.[size] != null) {
+      halfDayFee = halfDayBase(spOut.perNight[size]);
+      hasSpecial = true;
+    } else if (spOut?.surcharge?.[size] != null) {
+      halfDayFee = halfDayBase(rule.perNight) + spOut.surcharge[size];
+      hasSpecial = true;
+    } else {
+      halfDayFee = halfDayBase(rule.perNight);
+    }
+  }
   const overtimeFee = slot.overtimeHours * OVERTIME_HOURLY;
   const total = base + halfDayFee + overtimeFee;
 

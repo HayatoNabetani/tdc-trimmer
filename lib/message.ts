@@ -45,6 +45,7 @@ export function buildMessage(
       `🐶 ワンちゃんのサイズ：${sizeLabel}`,
       `📅 ご利用：${useLine}`,
       `💰 概算料金：${price(result.total ?? 0, result.isEstimateFrom)}（税込）`,
+      ...(result.hasSpecial ? ['　※特別料金期間を含みます'] : []),
       '',
       FOOTER,
     ].join('\n');
