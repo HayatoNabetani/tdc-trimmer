@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'ペットホテル 見積もりシミュレーター',
+  title: 'ペットホテル見積もりシミュレーター',
   description: 'ワンちゃんのお預かり料金を概算でご確認いただけます。',
   robots: { index: false, follow: false },
 };

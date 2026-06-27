@@ -159,7 +159,7 @@ export default function EstimatePage() {
       )}
       <header className="px-4 pb-2 pt-5">
         <h1 className="text-xl font-extrabold text-gray-900">
-          お預かり見積もりシミュレーター
+          ペットホテル見積もりシミュレーター
         </h1>
         <p className="mt-1 text-sm text-gray-500">
           数タップで概算料金をご確認いただけます。
