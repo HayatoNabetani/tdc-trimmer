@@ -1,7 +1,8 @@
 'use client';
 
 import { format } from 'date-fns';
-import type { EstimateInput, PickupTime, StayType } from '@/lib/types';
+import type { EstimateInput, PickupSlotId, StayType } from '@/lib/types';
+import { PICKUP_SLOTS } from '@/lib/pricing';
 
 // 今日（YYYY-MM-DD）。date input の min に使い、過去日付の選択を防ぐ。
 // このコンポーネントは liff 初期化後（クライアント）にのみ描画されるためSSR不整合は起きない。
@@ -24,6 +25,8 @@ const fieldClass =
 
 export function StaySelector({ input, dateError, onChange }: Props) {
   const { stayType } = input;
+  // 大型犬は日帰りなし → 宿泊のみ
+  const daycareAvailable = input.size !== 'large';
 
   return (
     <section>
@@ -34,35 +37,33 @@ export function StaySelector({ input, dateError, onChange }: Props) {
         </span>
       </h2>
 
-      {/* 日帰り / 宿泊 タブ */}
-      <div className="mb-4 flex gap-1 rounded-xl bg-gray-100 p-1">
-        <button
-          type="button"
-          className={tabClass(stayType === 'daycare')}
-          onClick={() => onChange({ stayType: 'daycare' })}
-        >
-          日帰り
-        </button>
-        <button
-          type="button"
-          className={tabClass(stayType === 'overnight')}
-          onClick={() => onChange({ stayType: 'overnight' })}
-        >
-          宿泊
-        </button>
-      </div>
+      {/* 日帰り / 宿泊 タブ（大型犬は宿泊のみ） */}
+      {daycareAvailable && (
+        <div className="mb-4 flex gap-1 rounded-xl bg-gray-100 p-1">
+          <button
+            type="button"
+            className={tabClass(stayType === 'daycare')}
+            onClick={() => onChange({ stayType: 'daycare' })}
+          >
+            日帰り
+          </button>
+          <button
+            type="button"
+            className={tabClass(stayType === 'overnight')}
+            onClick={() => onChange({ stayType: 'overnight' })}
+          >
+            宿泊
+          </button>
+        </div>
+      )}
 
-      {stayType === 'daycare' ? (
+      {stayType === 'daycare' && daycareAvailable ? (
         <DaycareFields
           value={input.daycareDate ?? ''}
           onChange={(daycareDate) => onChange({ daycareDate })}
         />
       ) : (
-        <OvernightFields
-          input={input}
-          dateError={dateError}
-          onChange={onChange}
-        />
+        <OvernightFields input={input} dateError={dateError} onChange={onChange} />
       )}
     </section>
   );
@@ -137,20 +138,27 @@ function OvernightFields({
         <legend className="mb-1.5 block text-sm font-medium text-gray-700">
           お迎え予定の時間帯
         </legend>
-        <div className="grid grid-cols-2 gap-3">
-          <PickupOption
-            label="午前中"
-            note="〜12:00"
-            active={input.pickupTime === 'morning'}
-            onClick={() => onChange({ pickupTime: 'morning' })}
-          />
-          <PickupOption
-            label="午後"
-            note="12:00〜（半日加算）"
-            active={input.pickupTime === 'afternoon'}
-            onClick={() => onChange({ pickupTime: 'afternoon' })}
-          />
+        <div className="space-y-2">
+          {PICKUP_SLOTS.map((slot) => {
+            const note = !slot.needsHalfDay
+              ? '追加なし'
+              : slot.overtimeHours === 0
+                ? '半日分を加算'
+                : `半日分 ＋ 延長${slot.overtimeHours}時間分`;
+            return (
+              <PickupOption
+                key={slot.id}
+                label={slot.label}
+                note={note}
+                active={input.pickupSlot === slot.id}
+                onClick={() => onChange({ pickupSlot: slot.id })}
+              />
+            );
+          })}
         </div>
+        <p className="mt-1.5 text-xs text-gray-400">
+          1泊はお預かり日〜翌日12:00まで。以降のお迎えは加算されます。
+        </p>
       </fieldset>
     </div>
   );
@@ -173,16 +181,16 @@ function PickupOption({
       aria-pressed={active}
       onClick={onClick}
       className={[
-        'flex flex-col items-start rounded-xl border-2 p-3 text-left transition',
+        'flex w-full items-center justify-between rounded-xl border-2 p-3 text-left transition',
         active
           ? 'border-[#06c755] bg-[#06c755]/10'
           : 'border-gray-200 bg-white active:bg-gray-50',
       ].join(' ')}
     >
       <span className="text-sm font-bold text-gray-800">{label}</span>
-      <span className="mt-0.5 text-xs text-gray-500">{note}</span>
+      <span className="text-xs text-gray-500">{note}</span>
     </button>
   );
 }
 
-export type { PickupTime, StayType };
+export type { PickupSlotId, StayType };

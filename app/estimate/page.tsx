@@ -62,7 +62,14 @@ export default function EstimatePage() {
   const patch = (p: Partial<EstimateInput>) =>
     setInput((prev) => ({ ...prev, ...p }));
 
-  const handleSize = (size: DogSize) => patch({ size });
+  const handleSize = (size: DogSize) => {
+    // 大型犬は日帰りなし → 宿泊に切替
+    if (size === 'large' && input.stayType === 'daycare') {
+      patch({ size, stayType: 'overnight' });
+    } else {
+      patch({ size });
+    }
+  };
 
   // 日程バリデーション（9章）
   const dateError = useMemo(() => {
@@ -92,7 +99,7 @@ export default function EstimatePage() {
       return { canSubmit: false, guide: '宿泊日程を選んでください' };
     }
     if (dateError) return { canSubmit: false, guide: null };
-    if (!input.pickupTime) {
+    if (!input.pickupSlot) {
       return { canSubmit: false, guide: 'お迎えの時間帯を選んでください' };
     }
     if (result.total == null) {
