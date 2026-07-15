@@ -14,6 +14,8 @@ type Props = {
   canSubmit: boolean;
   sending: boolean;
   guide: string | null;
+  agreed: boolean;
+  onAgreedChange: (v: boolean) => void;
   onSubmit: () => void;
 };
 
@@ -34,14 +36,17 @@ export function EstimateSummary({
   canSubmit,
   sending,
   guide,
+  agreed,
+  onAgreedChange,
   onSubmit,
 }: Props) {
   const summary = useText(input, result);
   const ctaLabel = result.needsContact
     ? '料金を相談する'
-    : 'この内容でLINEに送る';
+    : 'ホテル予約リクエストを送る';
   const hasAddon =
     result.hasSpecial || result.halfDayFee > 0 || result.overtimeFee > 0;
+  const canSend = canSubmit && agreed;
 
   return (
     <div className="sticky bottom-0 left-0 right-0 border-t border-gray-200 bg-white/95 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] backdrop-blur">
@@ -105,13 +110,30 @@ export function EstimateSummary({
           </div>
         )}
 
+        {/* 誤送信防止：内容確認のチェックを入れて初めて送信できる */}
+        {canSubmit && (
+          <label className="mb-3 flex items-start gap-2.5 rounded-lg bg-gray-50 p-3">
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => onAgreedChange(e.target.checked)}
+              className="mt-0.5 h-5 w-5 shrink-0 accent-[#06c755]"
+            />
+            <span className="text-sm font-medium text-gray-700">
+              {result.needsContact
+                ? '上記の内容で相談する'
+                : '見積もり内容を確認しました'}
+            </span>
+          </label>
+        )}
+
         <button
           type="button"
-          disabled={!canSubmit || sending}
+          disabled={!canSend || sending}
           onClick={onSubmit}
           className={[
             'w-full rounded-xl py-3.5 text-center text-base font-bold transition',
-            canSubmit && !sending
+            canSend && !sending
               ? 'bg-[#06c755] text-white active:bg-[#05b34c]'
               : 'cursor-not-allowed bg-gray-200 text-gray-400',
           ].join(' ')}

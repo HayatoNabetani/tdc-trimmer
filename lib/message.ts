@@ -11,6 +11,7 @@ const mdDate = (iso: string) => format(parseISO(iso), 'M/d');
 // 大型犬など下限価格は「〜」付き
 const price = (n: number, from: boolean) => `${yen(n)}${from ? '〜' : ''}`;
 
+const TRIMMING_NOTE = '※トリミングは上記とは別料金で承ります。';
 const FOOTER =
   '※こちらは概算です。正式なお見積もり・空き状況はスタッフよりご案内します。';
 
@@ -41,12 +42,13 @@ export function buildMessage(
       ? `日帰り（${jpDate(input.daycareDate)}）`
       : '日帰り';
     return [
-      '【お見積もり】',
+      '【ホテル予約リクエスト】',
       `🐶 ワンちゃんのサイズ：${sizeLabel}`,
       `📅 ご利用：${useLine}`,
       `💰 概算料金：${price(result.total ?? 0, result.isEstimateFrom)}（税込）`,
       ...(result.hasSpecial ? ['　※特別料金期間を含みます'] : []),
       '',
+      TRIMMING_NOTE,
       FOOTER,
     ].join('\n');
   }
@@ -55,7 +57,7 @@ export function buildMessage(
   const slot = findPickupSlot(input.pickupSlot);
   const pickupLabel = slot ? `お迎え${slot.label}` : '';
   const lines: string[] = [
-    '【お見積もり】',
+    '【ホテル予約リクエスト】',
     `🐶 ワンちゃんのサイズ：${sizeLabel}`,
     `📅 ご利用：宿泊 ${result.label}`,
   ];
@@ -84,7 +86,7 @@ export function buildMessage(
   if (result.hasSpecial) {
     lines.push('　※特別料金期間を含みます');
   }
-  lines.push('', FOOTER);
+  lines.push('', TRIMMING_NOTE, FOOTER);
 
   return lines.join('\n');
 }

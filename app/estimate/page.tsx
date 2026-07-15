@@ -32,6 +32,12 @@ export default function EstimatePage() {
   const [inClient, setInClient] = useState(false);
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [agreed, setAgreed] = useState(false); // 内容確認チェック（誤送信防止）
+
+  // 入力が変わったら確認チェックを外す（変更後の内容を再確認させる）
+  useEffect(() => {
+    setAgreed(false);
+  }, [input]);
 
   // LIFF 初期化（6.3）
   useEffect(() => {
@@ -109,7 +115,7 @@ export default function EstimatePage() {
   }, [input, result, dateError]);
 
   const handleSubmit = async () => {
-    if (!canSubmit || sending) return;
+    if (!canSubmit || !agreed || sending) return;
     setSending(true);
     setToast(null);
     try {
@@ -180,6 +186,12 @@ export default function EstimatePage() {
             下のボタンからお気軽にご相談ください。
           </p>
         )}
+
+        {input.size && (
+          <p className="rounded-lg bg-gray-100 p-3 text-xs leading-relaxed text-gray-500">
+            ※トリミングは上記とは別料金で承ります。
+          </p>
+        )}
       </div>
 
       {toast && (
@@ -196,6 +208,8 @@ export default function EstimatePage() {
         canSubmit={canSubmit}
         sending={sending}
         guide={guide}
+        agreed={agreed}
+        onAgreedChange={setAgreed}
         onSubmit={handleSubmit}
       />
     </main>
