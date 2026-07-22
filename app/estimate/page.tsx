@@ -10,7 +10,8 @@ import {
   sendTextMessage,
 } from '@/lib/liff';
 import type { DogSize, EstimateInput } from '@/lib/types';
-import { CANCEL_NOTE, CANCEL_TITLE } from '@/lib/notices';
+import { isFromPrice, perNightOf } from '@/lib/pricing';
+import { cancelNote, CANCEL_TITLE } from '@/lib/notices';
 import { SizeSelector } from './components/SizeSelector';
 import { StaySelector } from './components/StaySelector';
 import { EstimateSummary } from './components/EstimateSummary';
@@ -203,7 +204,7 @@ export default function EstimatePage() {
             <p>※トリミングは上記とは別料金で承ります。</p>
             <p>
               <span className="font-bold text-gray-600">{CANCEL_TITLE}</span>
-              ｜{CANCEL_NOTE}
+              ｜{cancelNote(perNightOf(input.size), isFromPrice(input.size))}
             </p>
           </div>
         )}

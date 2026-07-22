@@ -9,6 +9,7 @@ import {
   format,
 } from 'date-fns';
 import type {
+  DogSize,
   EstimateInput,
   EstimateResult,
   NightBreakdown,
@@ -35,6 +36,17 @@ export function halfDayBase(perNight: number): number {
 
 // 大型犬の 1泊料金は「10,000円〜」の下限表示
 export const LARGE_IS_FROM = true;
+
+// サイズの1泊単価（xlarge / 未選択は null）。キャンセル料の算出などに使う。
+export function perNightOf(size: DogSize | null): number | null {
+  if (!size || size === 'xlarge') return null;
+  return PRICE_TABLE[size].perNight;
+}
+
+// その1泊単価が「〜（下限）」表記か
+export function isFromPrice(size: DogSize | null): boolean {
+  return size === 'large' && LARGE_IS_FROM;
+}
 
 // お迎え時間帯のスロット定義
 // 12:00超 → 半日分加算 / 18:00以降 → さらに夜間定額（2時間枠）

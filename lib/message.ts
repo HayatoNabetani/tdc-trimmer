@@ -3,9 +3,9 @@
 import { format, parseISO } from 'date-fns';
 import type { EstimateInput, EstimateResult } from './types';
 import { SIZE_LABELS } from './types';
-import { findPickupSlot } from './pricing';
+import { findPickupSlot, isFromPrice, perNightOf } from './pricing';
 import {
-  CANCEL_NOTE,
+  cancelNote,
   CANCEL_TITLE,
   ESTIMATE_FOOTER as FOOTER,
   TRIMMING_NOTE,
@@ -23,7 +23,8 @@ const noteLines = (note?: string): string[] => {
   return t ? [`📝 ご要望：${t}`] : [];
 };
 
-const CANCEL_LINE = `※${CANCEL_TITLE}｜${CANCEL_NOTE}`;
+const cancelLine = (input: EstimateInput) =>
+  `※${CANCEL_TITLE}｜${cancelNote(perNightOf(input.size), isFromPrice(input.size))}`;
 
 /**
  * 見積もり内容から LINE トーク送信用のテキストを生成する。
@@ -61,7 +62,7 @@ export function buildMessage(
       ...noteLines(input.note),
       '',
       TRIMMING_NOTE,
-      CANCEL_LINE,
+      cancelLine(input),
       FOOTER,
     ].join('\n');
   }
@@ -100,7 +101,7 @@ export function buildMessage(
     lines.push('　※特別料金期間を含みます');
   }
   lines.push(...noteLines(input.note));
-  lines.push('', TRIMMING_NOTE, CANCEL_LINE, FOOTER);
+  lines.push('', TRIMMING_NOTE, cancelLine(input), FOOTER);
 
   return lines.join('\n');
 }
