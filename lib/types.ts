@@ -20,6 +20,7 @@ export interface EstimateInput {
   checkOut?: string; // 'YYYY-MM-DD'（宿泊時）
   pickupSlot?: PickupSlotId; // 宿泊時のお迎え時間帯
   daycareDate?: string; // 日帰り時の利用日（任意）
+  note?: string; // ご要望（任意・自由入力）
 }
 
 export interface PriceRule {

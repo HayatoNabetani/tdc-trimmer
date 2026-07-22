@@ -4,6 +4,12 @@ import { format, parseISO } from 'date-fns';
 import type { EstimateInput, EstimateResult } from './types';
 import { SIZE_LABELS } from './types';
 import { findPickupSlot } from './pricing';
+import {
+  CANCEL_NOTE,
+  CANCEL_TITLE,
+  ESTIMATE_FOOTER as FOOTER,
+  TRIMMING_NOTE,
+} from './notices';
 
 const yen = (n: number) => `¥${n.toLocaleString('ja-JP')}`;
 const jpDate = (iso: string) => format(parseISO(iso), 'yyyy/MM/dd');
@@ -11,9 +17,13 @@ const mdDate = (iso: string) => format(parseISO(iso), 'M/d');
 // 大型犬など下限価格は「〜」付き
 const price = (n: number, from: boolean) => `${yen(n)}${from ? '〜' : ''}`;
 
-const TRIMMING_NOTE = '※トリミングは上記とは別料金で承ります。';
-const FOOTER =
-  '※こちらは概算です。正式なお見積もり・空き状況はスタッフよりご案内します。';
+// ご要望（任意）。入力があれば行を返す。
+const noteLines = (note?: string): string[] => {
+  const t = note?.trim();
+  return t ? [`📝 ご要望：${t}`] : [];
+};
+
+const CANCEL_LINE = `※${CANCEL_TITLE}｜${CANCEL_NOTE}`;
 
 /**
  * 見積もり内容から LINE トーク送信用のテキストを生成する。
@@ -33,6 +43,7 @@ export function buildMessage(
       `🐶 ワンちゃんのサイズ：${sizeLabel}`,
       `${sizeLabel}のお預かり料金について相談したいです。`,
       'ご希望日程など、追ってメッセージします。',
+      ...noteLines(input.note),
     ].join('\n');
   }
 
@@ -47,8 +58,10 @@ export function buildMessage(
       `📅 ご利用：${useLine}`,
       `💰 概算料金：${price(result.total ?? 0, result.isEstimateFrom)}（税込）`,
       ...(result.hasSpecial ? ['　※特別料金期間を含みます'] : []),
+      ...noteLines(input.note),
       '',
       TRIMMING_NOTE,
+      CANCEL_LINE,
       FOOTER,
     ].join('\n');
   }
@@ -86,7 +99,8 @@ export function buildMessage(
   if (result.hasSpecial) {
     lines.push('　※特別料金期間を含みます');
   }
-  lines.push('', TRIMMING_NOTE, FOOTER);
+  lines.push(...noteLines(input.note));
+  lines.push('', TRIMMING_NOTE, CANCEL_LINE, FOOTER);
 
   return lines.join('\n');
 }

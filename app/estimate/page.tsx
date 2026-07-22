@@ -10,6 +10,7 @@ import {
   sendTextMessage,
 } from '@/lib/liff';
 import type { DogSize, EstimateInput } from '@/lib/types';
+import { CANCEL_NOTE, CANCEL_TITLE } from '@/lib/notices';
 import { SizeSelector } from './components/SizeSelector';
 import { StaySelector } from './components/StaySelector';
 import { EstimateSummary } from './components/EstimateSummary';
@@ -187,10 +188,33 @@ export default function EstimatePage() {
           </p>
         )}
 
+        {/* ご要望（任意） */}
         {input.size && (
-          <p className="rounded-lg bg-gray-100 p-3 text-xs leading-relaxed text-gray-500">
-            ※トリミングは上記とは別料金で承ります。
-          </p>
+          <label className="block">
+            <span className="mb-1.5 block text-base font-bold text-gray-800">
+              ③ ご要望
+              <span className="ml-2 align-middle text-xs font-normal text-gray-400">
+                任意
+              </span>
+            </span>
+            <textarea
+              rows={3}
+              value={input.note ?? ''}
+              onChange={(e) => patch({ note: e.target.value })}
+              placeholder="持病・お薬・食事・送迎のご希望など、あればご記入ください"
+              className="w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-800 placeholder:text-gray-400 focus:border-[#06c755] focus:outline-none"
+            />
+          </label>
+        )}
+
+        {input.size && (
+          <div className="space-y-2 rounded-lg bg-gray-100 p-3 text-xs leading-relaxed text-gray-500">
+            <p>※トリミングは上記とは別料金で承ります。</p>
+            <p>
+              <span className="font-bold text-gray-600">{CANCEL_TITLE}</span>
+              ｜{CANCEL_NOTE}
+            </p>
+          </div>
         )}
       </div>
 
