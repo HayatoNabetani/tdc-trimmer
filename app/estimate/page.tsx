@@ -164,16 +164,7 @@ export default function EstimatePage() {
           開発モード（LINE外）: 送信はプレビュー出力のみ
         </p>
       )}
-      <header className="px-4 pb-2 pt-5">
-        <h1 className="text-xl font-extrabold text-gray-900">
-          ペットホテル見積もりシミュレーター
-        </h1>
-        <p className="mt-1 text-sm text-gray-500">
-          数タップで概算料金をご確認いただけます。
-        </p>
-      </header>
-
-      <div className="flex-1 space-y-6 px-4 py-4">
+      <div className="flex-1 space-y-6 px-4 pb-4 pt-5">
         <SizeSelector value={input.size} onChange={handleSize} />
 
         {/* xlarge（要相談）のときは日程選択を出さない */}
