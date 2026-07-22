@@ -193,7 +193,7 @@ export default function EstimatePage() {
               rows={3}
               value={input.note ?? ''}
               onChange={(e) => patch({ note: e.target.value })}
-              placeholder="持病・お薬・食事・送迎のご希望など、あればご記入ください"
+              placeholder="持病・お薬・食事のご希望など、あればご記入ください"
               className="w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-800 placeholder:text-gray-400 focus:border-[#06c755] focus:outline-none"
             />
           </label>
