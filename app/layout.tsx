@@ -2,8 +2,9 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'ペットホテル見積もりシミュレーター',
-  description: 'ワンちゃんのお預かり料金を概算でご確認いただけます。',
+  // 各パスの layout.tsx でページごとに上書きする（既定は汎用タイトル）
+  title: 'わんこの湯 見積もりシミュレーター',
+  description: 'ワンちゃんの料金を概算でご確認いただけます。',
   robots: { index: false, follow: false },
 };
 
