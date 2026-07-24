@@ -7,14 +7,17 @@ import {
   isInClient,
   sendTextMessage,
 } from '@/lib/liff';
+import { format } from 'date-fns';
 import {
   calcTrim,
   COURSE_DESC,
   COURSE_LABELS,
   LARGE_TYPE_LABELS,
+  SINGLE_ITEMS,
   TRIM_SIZE_LABELS,
   visibleTrimOptions,
   type LargeType,
+  type SingleItemKey,
   type TrimCourse,
   type TrimInput,
   type TrimOptionKey,
@@ -26,6 +29,7 @@ import { PrepaySection } from '../estimate/components/PrepaySection';
 
 const DEV = process.env.NODE_ENV !== 'production';
 const yen = (n: number) => `¥${n.toLocaleString('ja-JP')}`;
+const today = () => format(new Date(), 'yyyy-MM-dd');
 
 const INITIAL: TrimInput = { size: null, course: 'trimming' };
 
@@ -33,7 +37,7 @@ type LiffStatus = 'loading' | 'ready' | 'outside' | 'error';
 
 const SIZES: TrimSize[] = ['small', 'medium', 'large', 'other'];
 const LARGE_TYPES: LargeType[] = ['miniature', 'medium', 'standard'];
-const COURSES: TrimCourse[] = ['shampoo', 'trimming'];
+const COURSES: TrimCourse[] = ['shampoo', 'trimming', 'single'];
 
 export default function TrimmingPage() {
   const [input, setInput] = useState<TrimInput>(INITIAL);
@@ -89,11 +93,23 @@ export default function TrimmingPage() {
     });
   };
 
+  const toggleSingleItem = (key: SingleItemKey) => {
+    const items = input.singleItems ?? [];
+    patch({
+      singleItems: items.includes(key)
+        ? items.filter((k) => k !== key)
+        : [...items, key],
+    });
+  };
+
   const { canSubmit, guide } = useMemo(() => {
     if (!input.size) {
       return { canSubmit: false, guide: 'ワンちゃんのサイズを選んでください' };
     }
     if (result.needsContact) return { canSubmit: true, guide: null };
+    if (input.course === 'single' && !(input.singleItems ?? []).length) {
+      return { canSubmit: false, guide: '単品メニューの項目を選んでください' };
+    }
     if (input.size === 'large' && !input.largeType) {
       return { canSubmit: false, guide: '大型犬のタイプを選んでください' };
     }
@@ -237,11 +253,77 @@ export default function TrimmingPage() {
           </section>
         )}
 
-        {/* ③ オプション */}
+        {/* ③ ご希望日 */}
         {input.size && !result.needsContact && (
           <section>
             <h2 className="mb-2 text-base font-bold text-gray-800">
-              ③ オプション
+              ③ ご希望日
+              <span className="ml-2 align-middle text-xs font-normal text-gray-400">
+                任意
+              </span>
+            </h2>
+            <input
+              type="date"
+              value={input.date ?? ''}
+              min={today()}
+              onChange={(e) => patch({ date: e.target.value })}
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-800 focus:border-[#06c755] focus:outline-none"
+            />
+            <p className="mt-1.5 text-xs text-gray-400">
+              完全予約制です。空き状況はスタッフよりご案内します。
+            </p>
+          </section>
+        )}
+
+        {/* ④ 単品メニュー（単品コース時）/ オプション（シャンプー・トリミング時）*/}
+        {input.size && !result.needsContact && input.course === 'single' && (
+          <section>
+            <h2 className="mb-2 text-base font-bold text-gray-800">
+              ④ 単品メニュー
+              <span className="ml-2 align-middle text-xs font-normal text-red-500">
+                必須・複数選択可
+              </span>
+            </h2>
+            <div className="space-y-2">
+              {SINGLE_ITEMS.map((it) => {
+                const checked = (input.singleItems ?? []).includes(it.key);
+                return (
+                  <label
+                    key={it.key}
+                    className={[
+                      'flex items-center gap-2.5 rounded-lg border-2 px-3 py-2.5 transition',
+                      checked
+                        ? 'border-[#06c755] bg-[#06c755]/10'
+                        : 'border-gray-200 bg-white',
+                    ].join(' ')}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleSingleItem(it.key)}
+                      className="h-5 w-5 shrink-0 accent-[#06c755]"
+                    />
+                    <span className="flex-1 text-sm font-medium text-gray-800">
+                      {it.label}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {yen(it.price)}
+                      {it.key === 'partialCut' ? '' : '〜'}／1箇所
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+            <p className="mt-1.5 text-xs text-gray-400">
+              箇所数など詳細はご要望欄にご記入ください。
+            </p>
+          </section>
+        )}
+
+        {input.size && !result.needsContact && input.course !== 'single' && (
+          <section>
+            <h2 className="mb-2 text-base font-bold text-gray-800">
+              ④ オプション
               <span className="ml-2 align-middle text-xs font-normal text-gray-400">
                 任意
               </span>
@@ -304,7 +386,7 @@ export default function TrimmingPage() {
         {input.size && (
           <label className="block">
             <span className="mb-1.5 block text-base font-bold text-gray-800">
-              ④ ご要望
+              ⑤ ご要望
               <span className="ml-2 align-middle text-xs font-normal text-gray-400">
                 任意
               </span>

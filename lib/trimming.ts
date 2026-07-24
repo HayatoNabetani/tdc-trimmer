@@ -4,20 +4,23 @@ import type { PrepayFields } from './types';
 
 export type TrimSize = 'small' | 'medium' | 'large' | 'other';
 export type LargeType = 'miniature' | 'medium' | 'standard';
-export type TrimCourse = 'shampoo' | 'trimming';
-export type TrimOptionKey =
-  | 'allShears'
-  | 'matting'
-  | 'spa'
-  | 'singleItem'
+export type TrimCourse = 'shampoo' | 'trimming' | 'single';
+export type TrimOptionKey = 'allShears' | 'matting' | 'spa';
+export type SingleItemKey =
+  | 'beard'
+  | 'earHair'
+  | 'teeth'
+  | 'pawPad'
   | 'partialCut';
 
 export interface TrimInput extends PrepayFields {
   size: TrimSize | null;
   largeType?: LargeType; // 大型犬のみ
   course: TrimCourse;
+  date?: string; // ご希望日（任意・'YYYY-MM-DD'）
   seniorOrHealth?: boolean; // 13歳以上／健康に不安 → 要お問い合わせ
-  options?: TrimOptionKey[];
+  options?: TrimOptionKey[]; // シャンプー/トリミングの別途オプション
+  singleItems?: SingleItemKey[]; // 単品メニューの選択項目
   note?: string; // ご要望（一言）
 }
 
@@ -46,21 +49,36 @@ export const LARGE_TYPE_LABELS: Record<LargeType, string> = {
 export const COURSE_LABELS: Record<TrimCourse, string> = {
   shampoo: 'シャンプーコース',
   trimming: 'トリミングコース',
+  single: '単品メニュー',
 };
 
 export const COURSE_DESC: Record<TrimCourse, string> = {
   shampoo: 'シャンプー&ブロー＋爪・足廻りの整え、耳掃除、簡単なムダ毛処理',
   trimming: 'シャンプーコース＋全身カット',
+  single: 'ヒゲカット・耳毛抜き等（1箇所¥660〜）／部分カット（1箇所¥1,100）',
 };
 
+// 単品メニュー（1箇所ごとの料金）
+export const SINGLE_ITEMS: { key: SingleItemKey; label: string; price: number }[] =
+  [
+    { key: 'beard', label: 'ヒゲカット', price: 660 },
+    { key: 'earHair', label: '耳毛抜き', price: 660 },
+    { key: 'teeth', label: 'ハミガキ', price: 660 },
+    { key: 'pawPad', label: '足裏バリカン', price: 660 },
+    { key: 'partialCut', label: '部分カット', price: 1100 },
+  ];
+
+// サイズ×コースで料金が決まるコース（単品メニューは除く）
+type SizedCourse = Exclude<TrimCourse, 'single'>;
+
 // 小型・中型の基本料金
-const PRICE: Record<'small' | 'medium', Record<TrimCourse, number>> = {
+const PRICE: Record<'small' | 'medium', Record<SizedCourse, number>> = {
   small: { shampoo: 6600, trimming: 8250 },
   medium: { shampoo: 7700, trimming: 9350 },
 };
 
 // 大型（ドゥードゥル等）は下限（〜）価格
-const LARGE_PRICE: Record<LargeType, Record<TrimCourse, number>> = {
+const LARGE_PRICE: Record<LargeType, Record<SizedCourse, number>> = {
   miniature: { shampoo: 9350, trimming: 12350 },
   medium: { shampoo: 12000, trimming: 15000 },
   standard: { shampoo: 16000, trimming: 19000 },
@@ -91,16 +109,6 @@ export const TRIM_OPTIONS: {
     label: '温泉スパ希望',
     note: '別途料金（別府温泉の素で薬浴・要ご相談）',
   },
-  {
-    key: 'singleItem',
-    label: '単品メニュー（ヒゲカット・耳毛抜き・ハミガキ・足裏バリカン等）',
-    note: '別途 1箇所 ¥660〜',
-  },
-  {
-    key: 'partialCut',
-    label: '部分カット',
-    note: '別途 1箇所 ¥1,100',
-  },
 ];
 
 const empty = (): TrimResult => ({
@@ -119,18 +127,37 @@ export function calcTrim(input: TrimInput): TrimResult {
     return { ...empty(), needsContact: true };
   }
 
-  const opts = input.options ?? [];
   const courseLabel = COURSE_LABELS[input.course];
 
-  // 基本料金
+  // 単品メニュー：選択項目の合計（各1箇所ぶん・「〜」表記）
+  if (input.course === 'single') {
+    const items = input.singleItems ?? [];
+    if (!items.length) return { ...empty(), courseLabel }; // 未選択 → 未確定
+    let base = 0;
+    const extraNotes: string[] = [];
+    for (const it of SINGLE_ITEMS) {
+      if (!items.includes(it.key)) continue;
+      base += it.price;
+      const suffix = it.key === 'partialCut' ? '' : '〜';
+      extraNotes.push(
+        `${it.label}：¥${it.price.toLocaleString('ja-JP')}${suffix}（1箇所）`,
+      );
+    }
+    return { needsContact: false, base, isFrom: true, courseLabel, extraNotes };
+  }
+
+  const sized: SizedCourse = input.course;
+  const opts = input.options ?? [];
+
+  // 基本料金（サイズ×コース）
   let base: number | null;
   let isFrom = false;
   if (input.size === 'large') {
-    if (!input.largeType) return empty(); // タイプ未選択
-    base = LARGE_PRICE[input.largeType][input.course];
+    if (!input.largeType) return { ...empty(), courseLabel }; // タイプ未選択
+    base = LARGE_PRICE[input.largeType][sized];
     isFrom = true; // 大型は「〜」
   } else {
-    base = PRICE[input.size][input.course];
+    base = PRICE[input.size][sized];
   }
 
   // 別途料金オプション（すべて別途扱い。範囲オプションは概算を「〜」に）

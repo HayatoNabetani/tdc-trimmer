@@ -1,5 +1,6 @@
 // トリミング見積もりの LINE 送信メッセージ生成
 
+import { format, parseISO } from 'date-fns';
 import {
   COURSE_DESC,
   LARGE_TYPE_LABELS,
@@ -11,6 +12,9 @@ import { prepayMessageLines } from './prepay';
 
 const yen = (n: number) => `¥${n.toLocaleString('ja-JP')}`;
 const price = (n: number, from: boolean) => `${yen(n)}${from ? '〜' : ''}`;
+const jpDate = (iso: string) => format(parseISO(iso), 'yyyy/MM/dd');
+const dateLines = (iso?: string): string[] =>
+  iso ? [`📅 ご希望日：${jpDate(iso)}`] : [];
 
 // フォーム・メッセージ共通の予約に関する注意書き（画像より）
 export const TRIM_POLICY_NOTES = [
@@ -41,6 +45,7 @@ export function buildTrimMessage(input: TrimInput, result: TrimResult): string {
       `🐶 ワンちゃんのサイズ：${sizeLabel || '—'}`,
       reason,
       'ご希望のスタイル・日程など、追ってメッセージします。',
+      ...dateLines(input.date),
       ...noteLines(input.note),
       ...prepayMessageLines(input),
     ].join('\n');
@@ -56,11 +61,14 @@ export function buildTrimMessage(input: TrimInput, result: TrimResult): string {
     `🐶 ワンちゃんのサイズ：${sizeLabel}${largeType}`,
     `✂️ コース：${result.courseLabel}`,
     `　（${COURSE_DESC[input.course]}）`,
+    ...dateLines(input.date),
     `💰 概算料金：${price(result.base ?? 0, result.isFrom)}（税込）`,
   ];
 
   if (result.extraNotes.length) {
-    lines.push('＜オプション・別途料金＞');
+    lines.push(
+      input.course === 'single' ? '＜単品メニュー内訳＞' : '＜オプション・別途料金＞',
+    );
     for (const n of result.extraNotes) lines.push(`　・${n}`);
   }
 
