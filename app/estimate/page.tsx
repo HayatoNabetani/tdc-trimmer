@@ -11,6 +11,7 @@ import {
 } from '@/lib/liff';
 import type { DogSize, EstimateInput } from '@/lib/types';
 import { isFromPrice, perNightOf } from '@/lib/pricing';
+import { prepayGuide } from '@/lib/prepay';
 import {
   cancelNote,
   CANCEL_TITLE,
@@ -128,19 +129,9 @@ export default function EstimatePage() {
     })();
 
     // 事前決済「希望する」なら連絡方法・連絡先が必要
-    if (base.canSubmit && input.prepay === 'yes') {
-      if (!input.prepayContact) {
-        return { canSubmit: false, guide: '決済案内の連絡方法を選んでください' };
-      }
-      if (!input.prepayValue?.trim()) {
-        return {
-          canSubmit: false,
-          guide:
-            input.prepayContact === 'email'
-              ? 'メールアドレスをご記入ください'
-              : '携帯番号をご記入ください',
-        };
-      }
+    if (base.canSubmit) {
+      const pg = prepayGuide(input);
+      if (pg) return { canSubmit: false, guide: pg };
     }
     return base;
   }, [input, result, dateError]);

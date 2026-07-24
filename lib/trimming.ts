@@ -1,11 +1,18 @@
 // トリミング見積もりの料金モデル・計算（クライアント提供の料金表より・すべて税込）
 
+import type { PrepayFields } from './types';
+
 export type TrimSize = 'small' | 'medium' | 'large' | 'other';
 export type LargeType = 'miniature' | 'medium' | 'standard';
 export type TrimCourse = 'shampoo' | 'trimming';
-export type TrimOptionKey = 'overWeight' | 'allShears' | 'matting' | 'spa';
+export type TrimOptionKey =
+  | 'allShears'
+  | 'matting'
+  | 'spa'
+  | 'singleItem'
+  | 'partialCut';
 
-export interface TrimInput {
+export interface TrimInput extends PrepayFields {
   size: TrimSize | null;
   largeType?: LargeType; // 大型犬のみ
   course: TrimCourse;
@@ -59,9 +66,6 @@ const LARGE_PRICE: Record<LargeType, Record<TrimCourse, number>> = {
   standard: { shampoo: 16000, trimming: 19000 },
 };
 
-// 規定体重超過の別途料金（小型7kg／中型12kg以上）
-export const OVER_WEIGHT_FEE = 550;
-
 // オプション定義（チェックボックス）
 export const TRIM_OPTIONS: {
   key: TrimOptionKey;
@@ -70,12 +74,6 @@ export const TRIM_OPTIONS: {
   sizes?: TrimSize[]; // 表示対象サイズ（未指定なら全サイズ）
   makesFrom?: boolean; // 選ぶと「〜（目安）」表記にする
 }[] = [
-  {
-    key: 'overWeight',
-    label: '規定体重を超える（小型7kg／中型12kg以上）',
-    note: `別途 ¥${OVER_WEIGHT_FEE.toLocaleString('ja-JP')}`,
-    sizes: ['small', 'medium'],
-  },
   {
     key: 'allShears',
     label: 'オールシザー希望',
@@ -92,6 +90,16 @@ export const TRIM_OPTIONS: {
     key: 'spa',
     label: '温泉スパ希望',
     note: '別途料金（別府温泉の素で薬浴・要ご相談）',
+  },
+  {
+    key: 'singleItem',
+    label: '単品メニュー（ヒゲカット・耳毛抜き・ハミガキ・足裏バリカン等）',
+    note: '別途 1箇所 ¥660〜',
+  },
+  {
+    key: 'partialCut',
+    label: '部分カット',
+    note: '別途 1箇所 ¥1,100',
   },
 ];
 
@@ -125,16 +133,12 @@ export function calcTrim(input: TrimInput): TrimResult {
     base = PRICE[input.size][input.course];
   }
 
-  // 別途料金オプション
+  // 別途料金オプション（すべて別途扱い。範囲オプションは概算を「〜」に）
   const extraNotes: string[] = [];
   for (const meta of TRIM_OPTIONS) {
     if (!opts.includes(meta.key)) continue;
     if (meta.sizes && !meta.sizes.includes(input.size)) continue;
-    if (meta.key === 'overWeight') {
-      base += OVER_WEIGHT_FEE; // 固定加算
-    } else {
-      if (meta.makesFrom) isFrom = true; // 範囲オプションは「〜」に
-    }
+    if (meta.makesFrom) isFrom = true;
     extraNotes.push(`${meta.label}：${meta.note}`);
   }
 

@@ -5,6 +5,7 @@ import type { EstimateInput, EstimateResult } from './types';
 import { SIZE_LABELS } from './types';
 import { findPickupSlot, isFromPrice, perNightOf } from './pricing';
 import { selectedRequestLabels } from './request';
+import { prepayMessageLines } from './prepay';
 import {
   cancelNote,
   CANCEL_TITLE,
@@ -33,17 +34,8 @@ const requestLines = (input: EstimateInput): string[] => {
 const trimmingLines = (input: EstimateInput): string[] =>
   input.trimming ? [`✂️ トリミング：希望（${TRIMMING_FEE_NOTE}）`] : [];
 
-// 事前決済のご希望
-const prepayLines = (input: EstimateInput): string[] => {
-  if (input.prepay !== 'yes') return [];
-  const method = input.prepayContact === 'email' ? 'メール' : 'SMS';
-  const value = input.prepayValue?.trim();
-  return [
-    '💳 事前決済：希望',
-    ...(value ? [`　${method}：${value}`] : []),
-    '　※後ほど決済のご案内をお送りします。',
-  ];
-};
+// 事前決済のご希望（共通ロジック）
+const prepayLines = prepayMessageLines;
 
 const cancelLine = (input: EstimateInput) =>
   `※${CANCEL_TITLE}｜${cancelNote(perNightOf(input.size), isFromPrice(input.size))}`;

@@ -22,10 +22,17 @@ export type RequestOptionKey =
 export type PrepayWish = 'none' | 'yes';
 export type PrepayContact = 'sms' | 'email';
 
+// 事前決済の入力（ホテル/トリミング共通で使う）
+export interface PrepayFields {
+  prepay?: PrepayWish; // 事前決済のご希望
+  prepayContact?: PrepayContact; // 決済案内の連絡方法
+  prepayValue?: string; // 携帯番号 / メールアドレス
+}
+
 // 料金計算の対象になるサイズ（xlarge は要お問い合わせのため除外）
 export type PricedSize = Exclude<DogSize, 'xlarge'>;
 
-export interface EstimateInput {
+export interface EstimateInput extends PrepayFields {
   size: DogSize | null;
   stayType: StayType;
   checkIn?: string; // 'YYYY-MM-DD'（宿泊時）
@@ -35,9 +42,6 @@ export interface EstimateInput {
   options?: RequestOptionKey[]; // ご要望チェック項目（任意）
   note?: string; // ご要望（任意・一言）
   trimming?: boolean; // トリミングも希望（別途料金）
-  prepay?: PrepayWish; // 事前決済のご希望
-  prepayContact?: PrepayContact; // 決済案内の連絡方法
-  prepayValue?: string; // 携帯番号 / メールアドレス
 }
 
 export interface PriceRule {

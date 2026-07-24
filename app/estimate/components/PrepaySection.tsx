@@ -1,14 +1,14 @@
 'use client';
 
 import type {
-  EstimateInput,
   PrepayContact,
+  PrepayFields,
   PrepayWish,
 } from '@/lib/types';
 
 type Props = {
-  input: EstimateInput;
-  onChange: (patch: Partial<EstimateInput>) => void;
+  input: PrepayFields;
+  onChange: (patch: Partial<PrepayFields>) => void;
 };
 
 const optBtn = (active: boolean) =>

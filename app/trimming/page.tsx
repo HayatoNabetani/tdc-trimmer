@@ -21,6 +21,8 @@ import {
   type TrimSize,
 } from '@/lib/trimming';
 import { buildTrimMessage, TRIM_POLICY_NOTES } from '@/lib/trimmingMessage';
+import { prepayGuide } from '@/lib/prepay';
+import { PrepaySection } from '../estimate/components/PrepaySection';
 
 const DEV = process.env.NODE_ENV !== 'production';
 const yen = (n: number) => `¥${n.toLocaleString('ja-JP')}`;
@@ -94,6 +96,8 @@ export default function TrimmingPage() {
     if (result.base == null) {
       return { canSubmit: false, guide: 'サイズとコースを選んでください' };
     }
+    const pg = prepayGuide(input);
+    if (pg) return { canSubmit: false, guide: pg };
     return { canSubmit: true, guide: null };
   }, [input, result]);
 
@@ -309,6 +313,11 @@ export default function TrimmingPage() {
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-800 placeholder:text-gray-400 focus:border-[#06c755] focus:outline-none"
             />
           </label>
+        )}
+
+        {/* 事前決済のご希望 */}
+        {input.size && !result.needsContact && (
+          <PrepaySection input={input} onChange={patch} />
         )}
 
         {/* 予約に関する注意 */}

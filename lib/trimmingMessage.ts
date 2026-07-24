@@ -7,6 +7,7 @@ import {
   type TrimInput,
   type TrimResult,
 } from './trimming';
+import { prepayMessageLines } from './prepay';
 
 const yen = (n: number) => `¥${n.toLocaleString('ja-JP')}`;
 const price = (n: number, from: boolean) => `${yen(n)}${from ? '〜' : ''}`;
@@ -41,6 +42,7 @@ export function buildTrimMessage(input: TrimInput, result: TrimResult): string {
       reason,
       'ご希望のスタイル・日程など、追ってメッセージします。',
       ...noteLines(input.note),
+      ...prepayMessageLines(input),
     ].join('\n');
   }
 
@@ -63,6 +65,7 @@ export function buildTrimMessage(input: TrimInput, result: TrimResult): string {
   }
 
   lines.push(...noteLines(input.note));
+  lines.push(...prepayMessageLines(input));
   lines.push('');
   for (const n of TRIM_POLICY_NOTES) lines.push(`※${n}`);
   lines.push(FOOTER);
