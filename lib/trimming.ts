@@ -13,8 +13,11 @@ export type SingleItemKey =
   | 'pawPad'
   | 'partialCut';
 
-// お迎え/来店の時間帯
-export type TrimTimeSlot = 'morning' | 'afternoon' | 'evening';
+// 来店の時間帯（any=どこでも＝指定なし・既定）
+export type TrimTimeSlot = 'any' | 'morning' | 'afternoon' | 'evening';
+
+// 時間帯の既定値
+export const DEFAULT_TIME_SLOT: TrimTimeSlot = 'any';
 
 // ご希望日時（第1〜第3希望）
 export interface TrimPref {
@@ -65,12 +68,14 @@ export const COURSE_LABELS: Record<TrimCourse, string> = {
 
 // 時間帯（画面ボタン用の短ラベル＋補足、メッセージ用のフルラベル）
 export const TIME_SLOTS: { key: TrimTimeSlot; label: string; note: string }[] = [
+  { key: 'any', label: 'どこでも', note: '' },
   { key: 'morning', label: '午前中', note: '' },
   { key: 'afternoon', label: '午後', note: '13:00〜15:00' },
   { key: 'evening', label: '夕方', note: '16:00〜18:00' },
 ];
 
 export const TIME_SLOT_LABELS: Record<TrimTimeSlot, string> = {
+  any: 'どこでも',
   morning: '午前中',
   afternoon: '午後 13:00〜15:00',
   evening: '夕方 16:00〜18:00',

@@ -12,6 +12,7 @@ import {
   calcTrim,
   COURSE_DESC,
   COURSE_LABELS,
+  DEFAULT_TIME_SLOT,
   LARGE_TYPE_LABELS,
   PREF_COUNT,
   SINGLE_ITEMS,
@@ -50,6 +51,7 @@ export default function TrimmingPage() {
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [agreed, setAgreed] = useState(false);
+  const [prefRows, setPrefRows] = useState(1); // 表示中の希望日行数（第1のみから増やせる）
 
   useEffect(() => {
     setAgreed(false);
@@ -279,25 +281,41 @@ export default function TrimmingPage() {
               </span>
             </h2>
             <div className="space-y-3">
-              {Array.from({ length: PREF_COUNT }, (_, i) => {
+              {Array.from({ length: prefRows }, (_, i) => {
                 const pref = input.prefs?.[i] ?? {};
                 const required = i === 0;
+                const selectedTime = pref.time ?? DEFAULT_TIME_SLOT; // 既定=どこでも
+                const isLastAdded = i === prefRows - 1 && i > 0;
                 return (
                   <div
                     key={i}
                     className="rounded-xl border border-gray-200 bg-white p-3"
                   >
-                    <p className="mb-1.5 text-sm font-bold text-gray-700">
-                      第{i + 1}希望
-                      <span
-                        className={[
-                          'ml-2 align-middle text-xs font-normal',
-                          required ? 'text-red-500' : 'text-gray-400',
-                        ].join(' ')}
-                      >
-                        {required ? '必須' : '任意'}
-                      </span>
-                    </p>
+                    <div className="mb-1.5 flex items-center justify-between">
+                      <p className="text-sm font-bold text-gray-700">
+                        第{i + 1}希望
+                        <span
+                          className={[
+                            'ml-2 align-middle text-xs font-normal',
+                            required ? 'text-red-500' : 'text-gray-400',
+                          ].join(' ')}
+                        >
+                          {required ? '必須' : '任意'}
+                        </span>
+                      </p>
+                      {isLastAdded && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPref(i, { date: undefined, time: undefined });
+                            setPrefRows(prefRows - 1);
+                          }}
+                          className="text-xs font-medium text-gray-400"
+                        >
+                          削除
+                        </button>
+                      )}
+                    </div>
                     <input
                       type="date"
                       value={pref.date ?? ''}
@@ -305,7 +323,7 @@ export default function TrimmingPage() {
                       onChange={(e) => setPref(i, { date: e.target.value })}
                       className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-800 focus:border-[#06c755] focus:outline-none"
                     />
-                    <div className="mt-2 grid grid-cols-3 gap-2">
+                    <div className="mt-2 grid grid-cols-2 gap-2">
                       {TIME_SLOTS.map((slot) => (
                         <button
                           key={slot.key}
@@ -313,7 +331,7 @@ export default function TrimmingPage() {
                           onClick={() => setPref(i, { time: slot.key })}
                           className={[
                             'flex flex-col items-center rounded-lg border-2 py-1.5 text-xs font-bold transition',
-                            pref.time === slot.key
+                            selectedTime === slot.key
                               ? 'border-[#06c755] bg-[#06c755]/10 text-gray-800'
                               : 'border-gray-200 bg-white text-gray-600',
                           ].join(' ')}
@@ -331,6 +349,17 @@ export default function TrimmingPage() {
                 );
               })}
             </div>
+
+            {prefRows < PREF_COUNT && (
+              <button
+                type="button"
+                onClick={() => setPrefRows(prefRows + 1)}
+                className="mt-3 w-full rounded-xl border-2 border-dashed border-gray-300 py-2.5 text-sm font-bold text-gray-500 active:bg-gray-50"
+              >
+                ＋ 希望日を追加（第{prefRows + 1}希望）
+              </button>
+            )}
+
             <p className="mt-1.5 text-xs text-gray-400">
               完全予約制です。空き状況はスタッフよりご案内します。
             </p>

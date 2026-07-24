@@ -25,7 +25,7 @@ const prefLines = (input: TrimInput): string[] => {
   if (!filled.length) return [];
   const lines = ['📅 ご希望日時'];
   for (const { p, i } of filled) {
-    const time = p.time ? `（${TIME_SLOT_LABELS[p.time]}）` : '';
+    const time = `（${TIME_SLOT_LABELS[p.time ?? 'any']}）`; // 既定は「どこでも」
     lines.push(`　${ORD[i] ?? `第${i + 1}希望`}：${jpDate(p.date!)}${time}`);
   }
   return lines;
