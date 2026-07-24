@@ -48,7 +48,7 @@ export function RequestSection({ input, onChange }: Props) {
         <div className="mt-3 space-y-4 rounded-xl bg-gray-50 p-4">
           <fieldset>
             <legend className="mb-2 block text-sm font-medium text-gray-700">
-              ご希望の項目
+              ご持参いただくもの
               <span className="ml-2 align-middle text-xs font-normal text-gray-400">
                 任意・複数選択可
               </span>

@@ -19,14 +19,13 @@ const mdDate = (iso: string) => format(parseISO(iso), 'M/d');
 // 大型犬など下限価格は「〜」付き
 const price = (n: number, from: boolean) => `${yen(n)}${from ? '〜' : ''}`;
 
-// ご要望（任意）。チェック項目＋一言があれば行を返す。
+// ご持参物（チェック項目）＋ご要望（一言）。あれば行を返す。
 const requestLines = (input: EstimateInput): string[] => {
   const labels = selectedRequestLabels(input.options);
   const note = input.note?.trim();
-  if (!labels.length && !note) return [];
   const lines: string[] = [];
-  if (labels.length) lines.push(`📝 ご要望：${labels.join('、')}`);
-  if (note) lines.push(labels.length ? `　${note}` : `📝 ご要望：${note}`);
+  if (labels.length) lines.push(`🧳 ご持参物：${labels.join('、')}`);
+  if (note) lines.push(`📝 ご要望：${note}`);
   return lines;
 };
 
