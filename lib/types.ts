@@ -18,6 +18,10 @@ export type RequestOptionKey =
   | 'dish'
   | 'allergy';
 
+// 事前決済のご希望
+export type PrepayWish = 'none' | 'yes';
+export type PrepayContact = 'sms' | 'email';
+
 // 料金計算の対象になるサイズ（xlarge は要お問い合わせのため除外）
 export type PricedSize = Exclude<DogSize, 'xlarge'>;
 
@@ -30,6 +34,10 @@ export interface EstimateInput {
   daycareDate?: string; // 日帰り時の利用日（任意）
   options?: RequestOptionKey[]; // ご要望チェック項目（任意）
   note?: string; // ご要望（任意・一言）
+  trimming?: boolean; // トリミングも希望（別途料金）
+  prepay?: PrepayWish; // 事前決済のご希望
+  prepayContact?: PrepayContact; // 決済案内の連絡方法
+  prepayValue?: string; // 携帯番号 / メールアドレス
 }
 
 export interface PriceRule {

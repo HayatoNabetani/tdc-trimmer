@@ -11,10 +11,16 @@ import {
 } from '@/lib/liff';
 import type { DogSize, EstimateInput } from '@/lib/types';
 import { isFromPrice, perNightOf } from '@/lib/pricing';
-import { cancelNote, CANCEL_TITLE } from '@/lib/notices';
+import {
+  cancelNote,
+  CANCEL_TITLE,
+  TRIMMING_FEE_NOTE,
+  TRIMMING_LABEL,
+} from '@/lib/notices';
 import { SizeSelector } from './components/SizeSelector';
 import { StaySelector } from './components/StaySelector';
 import { RequestSection } from './components/RequestSection';
+import { PrepaySection } from './components/PrepaySection';
 import { EstimateSummary } from './components/EstimateSummary';
 
 const INITIAL: EstimateInput = {
@@ -93,28 +99,50 @@ export default function EstimatePage() {
 
   // 送信可否・ガイド文の判定（4.4 / 9章）
   const { canSubmit, guide } = useMemo(() => {
-    if (!input.size) {
-      return { canSubmit: false, guide: 'まずはワンちゃんのサイズを選んでください' };
-    }
-    if (result.needsContact) {
-      // 大型犬は料金計算なしで相談送信できる
+    const base = ((): { canSubmit: boolean; guide: string | null } => {
+      if (!input.size) {
+        return {
+          canSubmit: false,
+          guide: 'まずはワンちゃんのサイズを選んでください',
+        };
+      }
+      if (result.needsContact) {
+        // 大型犬は料金計算なしで相談送信できる
+        return { canSubmit: true, guide: null };
+      }
+      if (input.stayType === 'daycare') {
+        return { canSubmit: true, guide: null };
+      }
+      // 宿泊
+      if (!input.checkIn || !input.checkOut) {
+        return { canSubmit: false, guide: '宿泊日程を選んでください' };
+      }
+      if (dateError) return { canSubmit: false, guide: null };
+      if (!input.pickupSlot) {
+        return { canSubmit: false, guide: 'お迎えの時間帯を選んでください' };
+      }
+      if (result.total == null) {
+        return { canSubmit: false, guide: 'サイズと日程を選んでください' };
+      }
       return { canSubmit: true, guide: null };
+    })();
+
+    // 事前決済「希望する」なら連絡方法・連絡先が必要
+    if (base.canSubmit && input.prepay === 'yes') {
+      if (!input.prepayContact) {
+        return { canSubmit: false, guide: '決済案内の連絡方法を選んでください' };
+      }
+      if (!input.prepayValue?.trim()) {
+        return {
+          canSubmit: false,
+          guide:
+            input.prepayContact === 'email'
+              ? 'メールアドレスをご記入ください'
+              : '携帯番号をご記入ください',
+        };
+      }
     }
-    if (input.stayType === 'daycare') {
-      return { canSubmit: true, guide: null };
-    }
-    // 宿泊
-    if (!input.checkIn || !input.checkOut) {
-      return { canSubmit: false, guide: '宿泊日程を選んでください' };
-    }
-    if (dateError) return { canSubmit: false, guide: null };
-    if (!input.pickupSlot) {
-      return { canSubmit: false, guide: 'お迎えの時間帯を選んでください' };
-    }
-    if (result.total == null) {
-      return { canSubmit: false, guide: 'サイズと日程を選んでください' };
-    }
-    return { canSubmit: true, guide: null };
+    return base;
   }, [input, result, dateError]);
 
   const handleSubmit = async () => {
@@ -184,9 +212,31 @@ export default function EstimatePage() {
         {/* ご要望（任意・開閉式） */}
         {input.size && <RequestSection input={input} onChange={patch} />}
 
+        {/* トリミング希望（別途料金） */}
         {input.size && (
-          <div className="space-y-2 rounded-lg bg-gray-100 p-3 text-xs leading-relaxed text-gray-500">
-            <p>※トリミングは上記とは別料金で承ります。</p>
+          <label className="flex items-start gap-2.5 rounded-xl border-2 border-gray-200 bg-white px-4 py-3">
+            <input
+              type="checkbox"
+              checked={!!input.trimming}
+              onChange={(e) => patch({ trimming: e.target.checked })}
+              className="mt-0.5 h-5 w-5 shrink-0 accent-[#06c755]"
+            />
+            <span>
+              <span className="text-sm font-bold text-gray-800">
+                {TRIMMING_LABEL}
+              </span>
+              <span className="mt-0.5 block text-xs text-gray-500">
+                ※{TRIMMING_FEE_NOTE}
+              </span>
+            </span>
+          </label>
+        )}
+
+        {/* 事前決済のご希望 */}
+        {input.size && <PrepaySection input={input} onChange={patch} />}
+
+        {input.size && (
+          <div className="rounded-lg bg-gray-100 p-3 text-xs leading-relaxed text-gray-500">
             <p>
               <span className="font-bold text-gray-600">{CANCEL_TITLE}</span>
               ｜{cancelNote(perNightOf(input.size), isFromPrice(input.size))}

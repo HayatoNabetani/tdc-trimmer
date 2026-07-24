@@ -9,7 +9,7 @@ import {
   cancelNote,
   CANCEL_TITLE,
   ESTIMATE_FOOTER as FOOTER,
-  TRIMMING_NOTE,
+  TRIMMING_FEE_NOTE,
 } from './notices';
 
 const yen = (n: number) => `¥${n.toLocaleString('ja-JP')}`;
@@ -27,6 +27,22 @@ const requestLines = (input: EstimateInput): string[] => {
   if (labels.length) lines.push(`📝 ご要望：${labels.join('、')}`);
   if (note) lines.push(labels.length ? `　${note}` : `📝 ご要望：${note}`);
   return lines;
+};
+
+// トリミング希望（別途料金）
+const trimmingLines = (input: EstimateInput): string[] =>
+  input.trimming ? [`✂️ トリミング：希望（${TRIMMING_FEE_NOTE}）`] : [];
+
+// 事前決済のご希望
+const prepayLines = (input: EstimateInput): string[] => {
+  if (input.prepay !== 'yes') return [];
+  const method = input.prepayContact === 'email' ? 'メール' : 'SMS';
+  const value = input.prepayValue?.trim();
+  return [
+    '💳 事前決済：希望',
+    ...(value ? [`　${method}：${value}`] : []),
+    '　※後ほど決済のご案内をお送りします。',
+  ];
 };
 
 const cancelLine = (input: EstimateInput) =>
@@ -51,6 +67,8 @@ export function buildMessage(
       `${sizeLabel}のお預かり料金について相談したいです。`,
       'ご希望日程など、追ってメッセージします。',
       ...requestLines(input),
+      ...trimmingLines(input),
+      ...prepayLines(input),
     ].join('\n');
   }
 
@@ -66,8 +84,9 @@ export function buildMessage(
       `💰 概算料金：${price(result.total ?? 0, result.isEstimateFrom)}（税込）`,
       ...(result.hasSpecial ? ['　※特別料金期間を含みます'] : []),
       ...requestLines(input),
+      ...trimmingLines(input),
+      ...prepayLines(input),
       '',
-      TRIMMING_NOTE,
       cancelLine(input),
       FOOTER,
     ].join('\n');
@@ -107,7 +126,9 @@ export function buildMessage(
     lines.push('　※特別料金期間を含みます');
   }
   lines.push(...requestLines(input));
-  lines.push('', TRIMMING_NOTE, cancelLine(input), FOOTER);
+  lines.push(...trimmingLines(input));
+  lines.push(...prepayLines(input));
+  lines.push('', cancelLine(input), FOOTER);
 
   return lines.join('\n');
 }
