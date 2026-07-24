@@ -92,7 +92,7 @@ export function RequestSection({ input, onChange }: Props) {
               type="text"
               value={input.note ?? ''}
               onChange={(e) => onChange({ note: e.target.value })}
-              placeholder="ひとことご要望があればご記入ください"
+              placeholder="ご要望"
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-800 placeholder:text-gray-400 focus:border-[#06c755] focus:outline-none"
             />
           </label>
