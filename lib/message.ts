@@ -4,6 +4,7 @@ import { format, parseISO } from 'date-fns';
 import type { EstimateInput, EstimateResult } from './types';
 import { SIZE_LABELS } from './types';
 import { findPickupSlot, isFromPrice, perNightOf } from './pricing';
+import { selectedRequestLabels } from './request';
 import {
   cancelNote,
   CANCEL_TITLE,
@@ -17,10 +18,15 @@ const mdDate = (iso: string) => format(parseISO(iso), 'M/d');
 // 大型犬など下限価格は「〜」付き
 const price = (n: number, from: boolean) => `${yen(n)}${from ? '〜' : ''}`;
 
-// ご要望（任意）。入力があれば行を返す。
-const noteLines = (note?: string): string[] => {
-  const t = note?.trim();
-  return t ? [`📝 ご要望：${t}`] : [];
+// ご要望（任意）。チェック項目＋一言があれば行を返す。
+const requestLines = (input: EstimateInput): string[] => {
+  const labels = selectedRequestLabels(input.options);
+  const note = input.note?.trim();
+  if (!labels.length && !note) return [];
+  const lines: string[] = [];
+  if (labels.length) lines.push(`📝 ご要望：${labels.join('、')}`);
+  if (note) lines.push(labels.length ? `　${note}` : `📝 ご要望：${note}`);
+  return lines;
 };
 
 const cancelLine = (input: EstimateInput) =>
@@ -44,7 +50,7 @@ export function buildMessage(
       `🐶 ワンちゃんのサイズ：${sizeLabel}`,
       `${sizeLabel}のお預かり料金について相談したいです。`,
       'ご希望日程など、追ってメッセージします。',
-      ...noteLines(input.note),
+      ...requestLines(input),
     ].join('\n');
   }
 
@@ -59,7 +65,7 @@ export function buildMessage(
       `📅 ご利用：${useLine}`,
       `💰 概算料金：${price(result.total ?? 0, result.isEstimateFrom)}（税込）`,
       ...(result.hasSpecial ? ['　※特別料金期間を含みます'] : []),
-      ...noteLines(input.note),
+      ...requestLines(input),
       '',
       TRIMMING_NOTE,
       cancelLine(input),
@@ -100,7 +106,7 @@ export function buildMessage(
   if (result.hasSpecial) {
     lines.push('　※特別料金期間を含みます');
   }
-  lines.push(...noteLines(input.note));
+  lines.push(...requestLines(input));
   lines.push('', TRIMMING_NOTE, cancelLine(input), FOOTER);
 
   return lines.join('\n');

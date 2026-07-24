@@ -14,6 +14,7 @@ import { isFromPrice, perNightOf } from '@/lib/pricing';
 import { cancelNote, CANCEL_TITLE } from '@/lib/notices';
 import { SizeSelector } from './components/SizeSelector';
 import { StaySelector } from './components/StaySelector';
+import { RequestSection } from './components/RequestSection';
 import { EstimateSummary } from './components/EstimateSummary';
 
 const INITIAL: EstimateInput = {
@@ -180,24 +181,8 @@ export default function EstimatePage() {
           </p>
         )}
 
-        {/* ご要望（任意） */}
-        {input.size && (
-          <label className="block">
-            <span className="mb-1.5 block text-base font-bold text-gray-800">
-              ③ ご要望
-              <span className="ml-2 align-middle text-xs font-normal text-gray-400">
-                任意
-              </span>
-            </span>
-            <textarea
-              rows={3}
-              value={input.note ?? ''}
-              onChange={(e) => patch({ note: e.target.value })}
-              placeholder="持病・お薬・食事のご希望など、あればご記入ください"
-              className="w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-800 placeholder:text-gray-400 focus:border-[#06c755] focus:outline-none"
-            />
-          </label>
-        )}
+        {/* ご要望（任意・開閉式） */}
+        {input.size && <RequestSection input={input} onChange={patch} />}
 
         {input.size && (
           <div className="space-y-2 rounded-lg bg-gray-100 p-3 text-xs leading-relaxed text-gray-500">

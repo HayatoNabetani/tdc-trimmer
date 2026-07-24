@@ -10,6 +10,14 @@ export type StayType = 'daycare' | 'overnight';
 // by22 : 20:00〜22:00（半日分 ＋ ¥3,000、最終）
 export type PickupSlotId = 'by12' | 'by18' | 'by20' | 'by22';
 
+// ご要望のチェック項目（任意）
+export type RequestOptionKey =
+  | 'meal'
+  | 'treat'
+  | 'toilet'
+  | 'dish'
+  | 'allergy';
+
 // 料金計算の対象になるサイズ（xlarge は要お問い合わせのため除外）
 export type PricedSize = Exclude<DogSize, 'xlarge'>;
 
@@ -20,7 +28,8 @@ export interface EstimateInput {
   checkOut?: string; // 'YYYY-MM-DD'（宿泊時）
   pickupSlot?: PickupSlotId; // 宿泊時のお迎え時間帯
   daycareDate?: string; // 日帰り時の利用日（任意）
-  note?: string; // ご要望（任意・自由入力）
+  options?: RequestOptionKey[]; // ご要望チェック項目（任意）
+  note?: string; // ご要望（任意・一言）
 }
 
 export interface PriceRule {
