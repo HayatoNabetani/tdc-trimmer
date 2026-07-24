@@ -13,7 +13,9 @@ import {
   COURSE_DESC,
   COURSE_LABELS,
   LARGE_TYPE_LABELS,
+  PREF_COUNT,
   SINGLE_ITEMS,
+  TIME_SLOTS,
   TRIM_SIZE_LABELS,
   visibleTrimOptions,
   type LargeType,
@@ -21,6 +23,7 @@ import {
   type TrimCourse,
   type TrimInput,
   type TrimOptionKey,
+  type TrimPref,
   type TrimSize,
 } from '@/lib/trimming';
 import { buildTrimMessage, TRIM_POLICY_NOTES } from '@/lib/trimmingMessage';
@@ -102,6 +105,16 @@ export default function TrimmingPage() {
     });
   };
 
+  // 第i希望（date/time）を更新
+  const setPref = (i: number, p: Partial<TrimPref>) => {
+    const prefs: TrimPref[] = Array.from(
+      { length: PREF_COUNT },
+      (_, idx) => input.prefs?.[idx] ?? {},
+    );
+    prefs[i] = { ...prefs[i], ...p };
+    patch({ prefs });
+  };
+
   const { canSubmit, guide } = useMemo(() => {
     if (!input.size) {
       return { canSubmit: false, guide: 'ワンちゃんのサイズを選んでください' };
@@ -115,6 +128,9 @@ export default function TrimmingPage() {
     }
     if (result.base == null) {
       return { canSubmit: false, guide: 'サイズとコースを選んでください' };
+    }
+    if (!input.prefs?.[0]?.date) {
+      return { canSubmit: false, guide: '第1希望日を選んでください' };
     }
     const pg = prepayGuide(input);
     if (pg) return { canSubmit: false, guide: pg };
@@ -253,22 +269,68 @@ export default function TrimmingPage() {
           </section>
         )}
 
-        {/* ③ ご希望日 */}
+        {/* ③ ご希望日時（第1〜第3希望） */}
         {input.size && !result.needsContact && (
           <section>
             <h2 className="mb-2 text-base font-bold text-gray-800">
-              ③ ご希望日
-              <span className="ml-2 align-middle text-xs font-normal text-gray-400">
-                任意
+              ③ ご希望日時
+              <span className="ml-2 align-middle text-xs font-normal text-red-500">
+                第1希望は必須
               </span>
             </h2>
-            <input
-              type="date"
-              value={input.date ?? ''}
-              min={today()}
-              onChange={(e) => patch({ date: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-800 focus:border-[#06c755] focus:outline-none"
-            />
+            <div className="space-y-3">
+              {Array.from({ length: PREF_COUNT }, (_, i) => {
+                const pref = input.prefs?.[i] ?? {};
+                const required = i === 0;
+                return (
+                  <div
+                    key={i}
+                    className="rounded-xl border border-gray-200 bg-white p-3"
+                  >
+                    <p className="mb-1.5 text-sm font-bold text-gray-700">
+                      第{i + 1}希望
+                      <span
+                        className={[
+                          'ml-2 align-middle text-xs font-normal',
+                          required ? 'text-red-500' : 'text-gray-400',
+                        ].join(' ')}
+                      >
+                        {required ? '必須' : '任意'}
+                      </span>
+                    </p>
+                    <input
+                      type="date"
+                      value={pref.date ?? ''}
+                      min={today()}
+                      onChange={(e) => setPref(i, { date: e.target.value })}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-800 focus:border-[#06c755] focus:outline-none"
+                    />
+                    <div className="mt-2 grid grid-cols-3 gap-2">
+                      {TIME_SLOTS.map((slot) => (
+                        <button
+                          key={slot.key}
+                          type="button"
+                          onClick={() => setPref(i, { time: slot.key })}
+                          className={[
+                            'flex flex-col items-center rounded-lg border-2 py-1.5 text-xs font-bold transition',
+                            pref.time === slot.key
+                              ? 'border-[#06c755] bg-[#06c755]/10 text-gray-800'
+                              : 'border-gray-200 bg-white text-gray-600',
+                          ].join(' ')}
+                        >
+                          <span>{slot.label}</span>
+                          {slot.note && (
+                            <span className="font-normal text-gray-400">
+                              {slot.note}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
             <p className="mt-1.5 text-xs text-gray-400">
               完全予約制です。空き状況はスタッフよりご案内します。
             </p>

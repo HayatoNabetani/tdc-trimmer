@@ -4,6 +4,7 @@ import { format, parseISO } from 'date-fns';
 import {
   COURSE_DESC,
   LARGE_TYPE_LABELS,
+  TIME_SLOT_LABELS,
   TRIM_SIZE_LABELS,
   type TrimInput,
   type TrimResult,
@@ -13,8 +14,22 @@ import { prepayMessageLines } from './prepay';
 const yen = (n: number) => `¥${n.toLocaleString('ja-JP')}`;
 const price = (n: number, from: boolean) => `${yen(n)}${from ? '〜' : ''}`;
 const jpDate = (iso: string) => format(parseISO(iso), 'yyyy/MM/dd');
-const dateLines = (iso?: string): string[] =>
-  iso ? [`📅 ご希望日：${jpDate(iso)}`] : [];
+
+const ORD = ['第1希望', '第2希望', '第3希望'];
+
+// ご希望日時（日付のある希望のみ列挙。第1/第2/第3 は元の位置で対応）
+const prefLines = (input: TrimInput): string[] => {
+  const filled = (input.prefs ?? [])
+    .map((p, i) => ({ p, i }))
+    .filter((x) => x.p?.date);
+  if (!filled.length) return [];
+  const lines = ['📅 ご希望日時'];
+  for (const { p, i } of filled) {
+    const time = p.time ? `（${TIME_SLOT_LABELS[p.time]}）` : '';
+    lines.push(`　${ORD[i] ?? `第${i + 1}希望`}：${jpDate(p.date!)}${time}`);
+  }
+  return lines;
+};
 
 // フォーム・メッセージ共通の予約に関する注意書き（画像より）
 export const TRIM_POLICY_NOTES = [
@@ -45,7 +60,7 @@ export function buildTrimMessage(input: TrimInput, result: TrimResult): string {
       `🐶 ワンちゃんのサイズ：${sizeLabel || '—'}`,
       reason,
       'ご希望のスタイル・日程など、追ってメッセージします。',
-      ...dateLines(input.date),
+      ...prefLines(input),
       ...noteLines(input.note),
       ...prepayMessageLines(input),
     ].join('\n');
@@ -61,7 +76,7 @@ export function buildTrimMessage(input: TrimInput, result: TrimResult): string {
     `🐶 ワンちゃんのサイズ：${sizeLabel}${largeType}`,
     `✂️ コース：${result.courseLabel}`,
     `　（${COURSE_DESC[input.course]}）`,
-    ...dateLines(input.date),
+    ...prefLines(input),
     `💰 概算料金：${price(result.base ?? 0, result.isFrom)}（税込）`,
   ];
 

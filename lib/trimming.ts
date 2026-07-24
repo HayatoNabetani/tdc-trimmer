@@ -13,11 +13,22 @@ export type SingleItemKey =
   | 'pawPad'
   | 'partialCut';
 
+// お迎え/来店の時間帯
+export type TrimTimeSlot = 'morning' | 'afternoon' | 'evening';
+
+// ご希望日時（第1〜第3希望）
+export interface TrimPref {
+  date?: string; // 'YYYY-MM-DD'
+  time?: TrimTimeSlot;
+}
+
+export const PREF_COUNT = 3;
+
 export interface TrimInput extends PrepayFields {
   size: TrimSize | null;
   largeType?: LargeType; // 大型犬のみ
   course: TrimCourse;
-  date?: string; // ご希望日（任意・'YYYY-MM-DD'）
+  prefs?: TrimPref[]; // ご希望日時（[0]=第1希望…必須）
   seniorOrHealth?: boolean; // 13歳以上／健康に不安 → 要お問い合わせ
   options?: TrimOptionKey[]; // シャンプー/トリミングの別途オプション
   singleItems?: SingleItemKey[]; // 単品メニューの選択項目
@@ -50,6 +61,19 @@ export const COURSE_LABELS: Record<TrimCourse, string> = {
   shampoo: 'シャンプーコース',
   trimming: 'トリミングコース',
   single: '単品メニュー',
+};
+
+// 時間帯（画面ボタン用の短ラベル＋補足、メッセージ用のフルラベル）
+export const TIME_SLOTS: { key: TrimTimeSlot; label: string; note: string }[] = [
+  { key: 'morning', label: '午前中', note: '' },
+  { key: 'afternoon', label: '午後', note: '13:00〜15:00' },
+  { key: 'evening', label: '夕方', note: '16:00〜18:00' },
+];
+
+export const TIME_SLOT_LABELS: Record<TrimTimeSlot, string> = {
+  morning: '午前中',
+  afternoon: '午後 13:00〜15:00',
+  evening: '夕方 16:00〜18:00',
 };
 
 export const COURSE_DESC: Record<TrimCourse, string> = {
