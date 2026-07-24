@@ -14,20 +14,31 @@ export type LiffState = {
 };
 
 /**
+ * NEXT_PUBLIC_LIFF_ID を正規化する。
+ * 誤って LIFF URL（https://liff.line.me/xxxx）全体を入れてしまっても
+ * ID 部分だけを取り出す。前後の空白・改行も除去。
+ */
+export function normalizeLiffId(raw: string): string {
+  const v = raw.trim();
+  const m = v.match(/liff\.line\.me\/([^/?#\s]+)/);
+  return m ? m[1] : v;
+}
+
+/**
  * liff.init を一度だけ実行する（多重初期化を防ぐためにキャッシュ）。
  * 失敗時は呼び出し側でハンドリングできるよう例外を投げる。
  */
 export function initLiff(): Promise<void> {
   if (initPromise) return initPromise;
 
-  const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
-  if (!liffId) {
+  const raw = process.env.NEXT_PUBLIC_LIFF_ID;
+  if (!raw) {
     return Promise.reject(
       new Error('NEXT_PUBLIC_LIFF_ID が未設定です（.env.local を確認）'),
     );
   }
 
-  initPromise = liff.init({ liffId });
+  initPromise = liff.init({ liffId: normalizeLiffId(raw) });
   return initPromise;
 }
 
