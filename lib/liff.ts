@@ -26,15 +26,16 @@ export function normalizeLiffId(raw: string): string {
 
 /**
  * liff.init を一度だけ実行する（多重初期化を防ぐためにキャッシュ）。
+ * パスごとに別のLIFFアプリを使う場合は rawId を渡す（未指定なら NEXT_PUBLIC_LIFF_ID）。
  * 失敗時は呼び出し側でハンドリングできるよう例外を投げる。
  */
-export function initLiff(): Promise<void> {
+export function initLiff(rawId?: string): Promise<void> {
   if (initPromise) return initPromise;
 
-  const raw = process.env.NEXT_PUBLIC_LIFF_ID;
+  const raw = rawId || process.env.NEXT_PUBLIC_LIFF_ID;
   if (!raw) {
     return Promise.reject(
-      new Error('NEXT_PUBLIC_LIFF_ID が未設定です（.env.local を確認）'),
+      new Error('LIFF ID が未設定です（.env / Vercel の環境変数を確認）'),
     );
   }
 

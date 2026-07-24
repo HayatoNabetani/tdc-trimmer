@@ -50,7 +50,11 @@ export default function TrimmingPage() {
 
   useEffect(() => {
     let active = true;
-    initLiff()
+    // トリミング専用LIFFがあればそれを使い、無ければホテル用にフォールバック
+    const trimLiffId =
+      process.env.NEXT_PUBLIC_LIFF_ID_TRIMMING ||
+      process.env.NEXT_PUBLIC_LIFF_ID;
+    initLiff(trimLiffId)
       .then(() => {
         if (!active) return;
         const within = isInClient();
