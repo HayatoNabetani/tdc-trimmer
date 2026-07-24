@@ -81,6 +81,26 @@ export function RequestSection({ input, onChange }: Props) {
             </div>
           </fieldset>
 
+          {/* アレルギー（持参物とは別扱い） */}
+          <label
+            className={[
+              'flex items-center gap-2.5 rounded-lg border-2 px-3 py-2.5 transition',
+              input.allergy
+                ? 'border-[#06c755] bg-[#06c755]/10'
+                : 'border-gray-200 bg-white',
+            ].join(' ')}
+          >
+            <input
+              type="checkbox"
+              checked={!!input.allergy}
+              onChange={(e) => onChange({ allergy: e.target.checked })}
+              className="h-5 w-5 shrink-0 accent-[#06c755]"
+            />
+            <span className="text-sm font-medium text-gray-800">
+              アレルギーあり
+            </span>
+          </label>
+
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium text-gray-700">
               その他ご要望
