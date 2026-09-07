@@ -43,7 +43,7 @@ const SIZES: TrimSize[] = ['small', 'medium', 'large', 'other'];
 const LARGE_TYPES: LargeType[] = ['miniature', 'medium', 'standard'];
 const COURSES: TrimCourse[] = ['shampoo', 'trimming', 'single'];
 
-export default function TrimmingPage() {
+export function TrimmingEstimatePage({ preview = false }: { preview?: boolean }) {
   const [input, setInput] = useState<TrimInput>(INITIAL);
   const [liffStatus, setLiffStatus] = useState<LiffStatus>('loading');
   const [liffError, setLiffError] = useState<string | null>(null);
@@ -58,6 +58,12 @@ export default function TrimmingPage() {
   }, [input]);
 
   useEffect(() => {
+    // 検証用パスはLINEへの接続を行わず、通常ブラウザで安全に確認する。
+    if (preview) {
+      setInClient(false);
+      setLiffStatus('ready');
+      return;
+    }
     let active = true;
     // トリミング専用LIFFがあればそれを使い、無ければホテル用にフォールバック
     const trimLiffId =
@@ -82,7 +88,7 @@ export default function TrimmingPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [preview]);
 
   const patch = (p: Partial<TrimInput>) =>
     setInput((prev) => ({ ...prev, ...p }));
@@ -145,7 +151,7 @@ export default function TrimmingPage() {
     setToast(null);
     try {
       const text = buildTrimMessage(input, result);
-      if (DEV && !inClient) {
+      if (preview || (DEV && !inClient)) {
         console.log('[DEV] 送信プレビュー:\n' + text);
         setToast('（開発モード）送信せずコンソールにプレビュー出力しました');
         setSending(false);
@@ -183,9 +189,9 @@ export default function TrimmingPage() {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col">
-      {DEV && !inClient && (
+      {(preview || (DEV && !inClient)) && (
         <p className="bg-amber-100 px-4 py-1.5 text-center text-xs font-medium text-amber-800">
-          開発モード（LINE外）: 送信はプレビュー出力のみ
+          {preview ? '検証モード' : '開発モード（LINE外）'}: 送信はプレビュー出力のみ
         </p>
       )}
 
@@ -577,6 +583,10 @@ export default function TrimmingPage() {
       </div>
     </main>
   );
+}
+
+export default function TrimmingPage() {
+  return <TrimmingEstimatePage />;
 }
 
 function Card({

@@ -16,6 +16,8 @@ import {
 const yen = (n: number) => `¥${n.toLocaleString('ja-JP')}`;
 const jpDate = (iso: string) => format(parseISO(iso), 'yyyy/MM/dd');
 const mdDate = (iso: string) => format(parseISO(iso), 'M/d');
+const withTime = (date: string, time?: string) =>
+  `${jpDate(date)}${time ? ` ${time}` : ''}`;
 // 大型犬など下限価格は「〜」付き
 const price = (n: number, from: boolean) => `${yen(n)}${from ? '〜' : ''}`;
 
@@ -67,7 +69,7 @@ export function buildMessage(
   // 8.2 日帰り
   if (input.stayType === 'daycare') {
     const useLine = input.daycareDate
-      ? `日帰り（${jpDate(input.daycareDate)}）`
+      ? `日帰り（${withTime(input.daycareDate, input.daycareStartTime)}${input.daycareEndTime ? `〜${input.daycareEndTime}` : ''}）`
       : '日帰り';
     return [
       '【ホテル予約リクエスト】',
@@ -93,9 +95,13 @@ export function buildMessage(
     `📅 ご利用：宿泊 ${result.label}`,
   ];
 
-  if (input.checkIn) lines.push(`　チェックイン：${jpDate(input.checkIn)}`);
+  if (input.checkIn) {
+    lines.push(`　チェックイン：${withTime(input.checkIn, input.checkInTime)}`);
+  }
   if (input.checkOut) {
-    lines.push(`　チェックアウト：${jpDate(input.checkOut)}（${pickupLabel}）`);
+    lines.push(
+      `　チェックアウト：${withTime(input.checkOut, input.checkOutTime)}（${pickupLabel}）`,
+    );
   }
 
   // 特別料金が含まれる場合は日別内訳を添える（8.2.1）

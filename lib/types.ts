@@ -31,9 +31,13 @@ export interface EstimateInput extends PrepayFields {
   size: DogSize | null;
   stayType: StayType;
   checkIn?: string; // 'YYYY-MM-DD'（宿泊時）
+  checkInTime?: string; // 'HH:mm'（宿泊時・検証版）
   checkOut?: string; // 'YYYY-MM-DD'（宿泊時）
+  checkOutTime?: string; // 'HH:mm'（宿泊時・検証版）
   pickupSlot?: PickupSlotId; // 宿泊時のお迎え時間帯
   daycareDate?: string; // 日帰り時の利用日（任意）
+  daycareStartTime?: string; // 'HH:mm'（日帰り・検証版）
+  daycareEndTime?: string; // 'HH:mm'（日帰り・検証版）
   options?: RequestOptionKey[]; // ご持参いただくもの（任意）
   allergy?: boolean; // アレルギーあり
   note?: string; // ご要望（任意・一言）
@@ -66,8 +70,7 @@ export interface SpecialPeriod {
   perNight?: Record<PricedSize, number>;
   // 方式B：通常料金への加算（今回の運用はこちら：+550/泊）
   surcharge?: Record<PricedSize, number>;
-  // 任意：半日・日帰りにも特別料金を適用する場合
-  halfDay?: Record<PricedSize, number>;
+  // 任意：日帰りにも特別料金を適用する場合（半日加算には適用しない）
   daycare?: Record<PricedSize, number>;
 }
 

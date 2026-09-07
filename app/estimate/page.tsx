@@ -35,7 +35,7 @@ type LiffStatus = 'loading' | 'ready' | 'outside' | 'error';
 // 初期化が失敗してもフォームを確認できるようバイパスする。本番では従来どおり弾く。
 const DEV = process.env.NODE_ENV !== 'production';
 
-export default function EstimatePage() {
+export function HotelEstimatePage({ preview = false }: { preview?: boolean }) {
   const [input, setInput] = useState<EstimateInput>(INITIAL);
   const [liffStatus, setLiffStatus] = useState<LiffStatus>('loading');
   const [liffError, setLiffError] = useState<string | null>(null);
@@ -51,6 +51,12 @@ export default function EstimatePage() {
 
   // LIFF 初期化（6.3）
   useEffect(() => {
+    // 検証用パスはLINEへの接続を行わず、通常ブラウザで安全に確認する。
+    if (preview) {
+      setInClient(false);
+      setLiffStatus('ready');
+      return;
+    }
     let active = true;
     initLiff()
       .then(() => {
@@ -73,7 +79,7 @@ export default function EstimatePage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [preview]);
 
   const patch = (p: Partial<EstimateInput>) =>
     setInput((prev) => ({ ...prev, ...p }));
@@ -112,6 +118,20 @@ export default function EstimatePage() {
         return { canSubmit: true, guide: null };
       }
       if (input.stayType === 'daycare') {
+        if (preview && !input.daycareDate) {
+          return { canSubmit: false, guide: 'ご利用日を選んでください' };
+        }
+        if (preview && (!input.daycareStartTime || !input.daycareEndTime)) {
+          return { canSubmit: false, guide: 'お預け・お迎え時刻を選んでください' };
+        }
+        if (
+          preview &&
+          input.daycareStartTime &&
+          input.daycareEndTime &&
+          input.daycareEndTime <= input.daycareStartTime
+        ) {
+          return { canSubmit: false, guide: 'お迎え時刻はお預け時刻より後を選んでください' };
+        }
         return { canSubmit: true, guide: null };
       }
       // 宿泊
@@ -119,6 +139,12 @@ export default function EstimatePage() {
         return { canSubmit: false, guide: '宿泊日程を選んでください' };
       }
       if (dateError) return { canSubmit: false, guide: null };
+      if (preview && (!input.checkInTime || !input.checkOutTime)) {
+        return { canSubmit: false, guide: 'チェックイン・チェックアウト時刻を選んでください' };
+      }
+      if (preview && input.checkOutTime && !input.pickupSlot) {
+        return { canSubmit: false, guide: 'お迎え時刻は22:00までを選んでください' };
+      }
       if (!input.pickupSlot) {
         return { canSubmit: false, guide: 'お迎えの時間帯を選んでください' };
       }
@@ -134,7 +160,7 @@ export default function EstimatePage() {
       if (pg) return { canSubmit: false, guide: pg };
     }
     return base;
-  }, [input, result, dateError]);
+  }, [input, result, dateError, preview]);
 
   const handleSubmit = async () => {
     if (!canSubmit || !agreed || sending) return;
@@ -143,7 +169,7 @@ export default function EstimatePage() {
     try {
       const text = buildMessage(input, result);
       // 開発時かつLINE外では sendMessages が使えないのでプレビュー出力に切替
-      if (DEV && !inClient) {
+      if (preview || (DEV && !inClient)) {
         console.log('[DEV] 送信プレビュー:\n' + text);
         setToast('（開発モード）送信せずコンソールにプレビュー出力しました');
         setSending(false);
@@ -180,9 +206,9 @@ export default function EstimatePage() {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col">
-      {DEV && !inClient && (
+      {(preview || (DEV && !inClient)) && (
         <p className="bg-amber-100 px-4 py-1.5 text-center text-xs font-medium text-amber-800">
-          開発モード（LINE外）: 送信はプレビュー出力のみ
+          {preview ? '検証モード' : '開発モード（LINE外）'}: 送信はプレビュー出力のみ
         </p>
       )}
       <div className="flex-1 space-y-6 px-4 pb-4 pt-5">
@@ -190,7 +216,12 @@ export default function EstimatePage() {
 
         {/* xlarge（要相談）のときは日程選択を出さない */}
         {input.size && input.size !== 'xlarge' && (
-          <StaySelector input={input} dateError={dateError} onChange={patch} />
+          <StaySelector
+            input={input}
+            dateError={dateError}
+            onChange={patch}
+            enableExactTimes={preview}
+          />
         )}
 
         {input.size === 'xlarge' && (
@@ -256,6 +287,10 @@ export default function EstimatePage() {
       />
     </main>
   );
+}
+
+export default function EstimatePage() {
+  return <HotelEstimatePage />;
 }
 
 function CenterMessage({ title, body }: { title: string; body?: string }) {

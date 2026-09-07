@@ -61,6 +61,16 @@ export function findPickupSlot(id?: string): PickupSlot | null {
   return PICKUP_SLOTS.find((s) => s.id === id) ?? null;
 }
 
+// お迎え時刻から料金計算用の時間帯を決める（検証版の時刻入力で使用）。
+export function pickupSlotForTime(time: string): PickupSlot['id'] | undefined {
+  if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time)) return undefined;
+  if (time <= '12:00') return 'by12';
+  if (time <= '18:00') return 'by18';
+  if (time <= '20:00') return 'by20';
+  if (time <= '22:00') return 'by22';
+  return undefined;
+}
+
 const empty = (): EstimateResult => ({
   needsContact: false,
   total: null,
@@ -144,20 +154,8 @@ export function calcEstimate(
     return { date, amount, label: sp?.name ?? '通常', isSpecial };
   });
 
-  // 半日分 ＝ 1泊料金の半額。チェックアウト日が特別期間なら特別料金を反映。
-  let halfDayFee = 0;
-  if (slot.needsHalfDay) {
-    const spOut = findSpecial(input.checkOut, specials);
-    if (spOut?.perNight?.[size] != null) {
-      halfDayFee = halfDayBase(spOut.perNight[size]);
-      hasSpecial = true;
-    } else if (spOut?.surcharge?.[size] != null) {
-      halfDayFee = halfDayBase(rule.perNight) + spOut.surcharge[size];
-      hasSpecial = true;
-    } else {
-      halfDayFee = halfDayBase(rule.perNight);
-    }
-  }
+  // 半日分は常に通常の1泊料金の半額。特別料金は適用しない。
+  const halfDayFee = slot.needsHalfDay ? halfDayBase(rule.perNight) : 0;
   const overtimeFee = slot.overtimeFee;
   const total = base + halfDayFee + overtimeFee;
 
