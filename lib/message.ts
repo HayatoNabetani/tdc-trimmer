@@ -9,6 +9,8 @@ import { prepayMessageLines } from './prepay';
 import {
   cancelNote,
   CANCEL_TITLE,
+  REFUND_TITLE,
+  REFUND_NOTE,
   ESTIMATE_FOOTER as FOOTER,
   TRIMMING_FEE_NOTE,
 } from './notices';
@@ -21,13 +23,14 @@ const withTime = (date: string, time?: string) =>
 // 大型犬など下限価格は「〜」付き
 const price = (n: number, from: boolean) => `${yen(n)}${from ? '〜' : ''}`;
 
-// ご持参物（チェック項目）＋アレルギー＋ご要望（一言）。あれば行を返す。
+// ご持参物＋ワンちゃんについて＋ご要望（一言）。あれば行を返す。
 const requestLines = (input: EstimateInput): string[] => {
   const labels = selectedRequestLabels(input.options);
   const note = input.note?.trim();
   const lines: string[] = [];
   if (labels.length) lines.push(`🧳 ご持参物：${labels.join('、')}`);
   if (input.allergy) lines.push('⚠️ アレルギー：あり');
+  if (input.outdoorToiletOnly) lines.push('🐾 トイレ：外のみ');
   if (note) lines.push(`📝 ご要望：${note}`);
   return lines;
 };
@@ -41,6 +44,8 @@ const prepayLines = prepayMessageLines;
 
 const cancelLine = (input: EstimateInput) =>
   `※${CANCEL_TITLE}｜${cancelNote(perNightOf(input.size), isFromPrice(input.size))}`;
+
+const refundLine = `※${REFUND_TITLE}｜${REFUND_NOTE}`;
 
 /**
  * 見積もり内容から LINE トーク送信用のテキストを生成する。
@@ -59,10 +64,18 @@ export function buildMessage(
       '【お預かりのご相談】',
       `🐶 ワンちゃんのサイズ：${sizeLabel}`,
       `${sizeLabel}のお預かり料金について相談したいです。`,
-      'ご希望日程など、追ってメッセージします。',
+      ...(input.stayType === 'daycare' && input.daycareDate
+        ? [
+            `📅 ご利用：当日お預かり（日帰り） ${jpDate(input.daycareDate)}`,
+            ...(input.daycareStartTime ? [`　お預け時刻：${input.daycareStartTime}`] : []),
+            ...(input.daycareEndTime ? [`　お迎え時刻：${input.daycareEndTime}`] : []),
+          ]
+        : ['ご希望日程など、追ってメッセージします。']),
       ...requestLines(input),
       ...trimmingLines(input),
       ...prepayLines(input),
+      '',
+      refundLine,
     ].join('\n');
   }
 
@@ -82,6 +95,7 @@ export function buildMessage(
       ...prepayLines(input),
       '',
       cancelLine(input),
+      refundLine,
       FOOTER,
     ].join('\n');
   }
@@ -126,7 +140,7 @@ export function buildMessage(
   lines.push(...requestLines(input));
   lines.push(...trimmingLines(input));
   lines.push(...prepayLines(input));
-  lines.push('', cancelLine(input), FOOTER);
+  lines.push('', cancelLine(input), refundLine, FOOTER);
 
   return lines.join('\n');
 }

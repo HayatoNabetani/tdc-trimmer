@@ -81,25 +81,55 @@ export function RequestSection({ input, onChange }: Props) {
             </div>
           </fieldset>
 
-          {/* アレルギー（持参物とは別扱い） */}
-          <label
-            className={[
-              'flex items-center gap-2.5 rounded-lg border-2 px-3 py-2.5 transition',
-              input.allergy
-                ? 'border-[#06c755] bg-[#06c755]/10'
-                : 'border-gray-200 bg-white',
-            ].join(' ')}
-          >
-            <input
-              type="checkbox"
-              checked={!!input.allergy}
-              onChange={(e) => onChange({ allergy: e.target.checked })}
-              className="h-5 w-5 shrink-0 accent-[#06c755]"
-            />
-            <span className="text-sm font-medium text-gray-800">
-              アレルギーあり
-            </span>
-          </label>
+          <fieldset className="border-t border-gray-200 pt-4">
+            <legend className="mb-2 block text-sm font-medium text-gray-700">
+              ワンちゃんについて
+              <span className="ml-2 align-middle text-xs font-normal text-gray-400">
+                任意・複数選択可
+              </span>
+            </legend>
+            <div className="space-y-2">
+              <label
+                className={[
+                  'flex items-center gap-2.5 rounded-lg border-2 px-3 py-2.5 transition',
+                  input.allergy
+                    ? 'border-[#06c755] bg-[#06c755]/10'
+                    : 'border-gray-200 bg-white',
+                ].join(' ')}
+              >
+                <input
+                  type="checkbox"
+                  checked={!!input.allergy}
+                  onChange={(e) => onChange({ allergy: e.target.checked })}
+                  className="h-5 w-5 shrink-0 accent-[#06c755]"
+                />
+                <span className="text-sm font-medium text-gray-800">
+                  アレルギーあり
+                </span>
+              </label>
+
+              <label
+                className={[
+                  'flex items-center gap-2.5 rounded-lg border-2 px-3 py-2.5 transition',
+                  input.outdoorToiletOnly
+                    ? 'border-[#06c755] bg-[#06c755]/10'
+                    : 'border-gray-200 bg-white',
+                ].join(' ')}
+              >
+                <input
+                  type="checkbox"
+                  checked={!!input.outdoorToiletOnly}
+                  onChange={(e) =>
+                    onChange({ outdoorToiletOnly: e.target.checked })
+                  }
+                  className="h-5 w-5 shrink-0 accent-[#06c755]"
+                />
+                <span className="text-sm font-medium text-gray-800">
+                  トイレは外のみ
+                </span>
+              </label>
+            </div>
+          </fieldset>
 
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium text-gray-700">

@@ -6,7 +6,6 @@ export const REQUEST_OPTIONS: { key: RequestOptionKey; label: string }[] = [
   { key: 'meal', label: '日数分のお食事' },
   { key: 'treat', label: 'おやつ' },
   { key: 'toilet', label: 'トイレ' },
-  { key: 'dish', label: '食器' },
 ];
 
 // 選択済みキー配列 → 表示ラベル配列（定義順を維持）

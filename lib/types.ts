@@ -11,7 +11,7 @@ export type StayType = 'daycare' | 'overnight';
 export type PickupSlotId = 'by12' | 'by18' | 'by20' | 'by22';
 
 // ご持参いただくもの（チェック項目・任意）
-export type RequestOptionKey = 'meal' | 'treat' | 'toilet' | 'dish';
+export type RequestOptionKey = 'meal' | 'treat' | 'toilet';
 
 // 事前決済のご希望
 export type PrepayWish = 'none' | 'yes';
@@ -40,6 +40,7 @@ export interface EstimateInput extends PrepayFields {
   daycareEndTime?: string; // 'HH:mm'（日帰り・検証版）
   options?: RequestOptionKey[]; // ご持参いただくもの（任意）
   allergy?: boolean; // アレルギーあり
+  outdoorToiletOnly?: boolean; // トイレは外のみ
   note?: string; // ご要望（任意・一言）
   trimming?: boolean; // トリミングも希望（別途料金）
 }

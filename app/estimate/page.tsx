@@ -15,6 +15,8 @@ import { prepayGuide } from '@/lib/prepay';
 import {
   cancelNote,
   CANCEL_TITLE,
+  REFUND_TITLE,
+  REFUND_NOTE,
   TRIMMING_FEE_NOTE,
   TRIMMING_LABEL,
 } from '@/lib/notices';
@@ -85,12 +87,7 @@ export function HotelEstimatePage({ preview = false }: { preview?: boolean }) {
     setInput((prev) => ({ ...prev, ...p }));
 
   const handleSize = (size: DogSize) => {
-    // 大型犬は日帰りなし → 宿泊に切替
-    if (size === 'large' && input.stayType === 'daycare') {
-      patch({ size, stayType: 'overnight' });
-    } else {
-      patch({ size });
-    }
+    patch({ size });
   };
 
   // 日程バリデーション（9章）
@@ -102,7 +99,13 @@ export function HotelEstimatePage({ preview = false }: { preview?: boolean }) {
     return null;
   }, [input.stayType, input.checkIn, input.checkOut]);
 
-  const result = useMemo(() => calcEstimate(input), [input]);
+  const result = useMemo(() => {
+    const estimate = calcEstimate(input);
+    if (input.size === 'large' && input.stayType === 'daycare') {
+      return { ...estimate, needsContact: true, label: '要お問い合わせ' };
+    }
+    return estimate;
+  }, [input]);
 
   // 送信可否・ガイド文の判定（4.4 / 9章）
   const { canSubmit, guide } = useMemo(() => {
@@ -113,19 +116,18 @@ export function HotelEstimatePage({ preview = false }: { preview?: boolean }) {
           guide: 'まずはワンちゃんのサイズを選んでください',
         };
       }
-      if (result.needsContact) {
+      if (result.needsContact && !(input.size === 'large' && input.stayType === 'daycare')) {
         // 大型犬は料金計算なしで相談送信できる
         return { canSubmit: true, guide: null };
       }
       if (input.stayType === 'daycare') {
-        if (preview && !input.daycareDate) {
+        if (!input.daycareDate) {
           return { canSubmit: false, guide: 'ご利用日を選んでください' };
         }
-        if (preview && (!input.daycareStartTime || !input.daycareEndTime)) {
+        if (!input.daycareStartTime || !input.daycareEndTime) {
           return { canSubmit: false, guide: 'お預け・お迎え時刻を選んでください' };
         }
         if (
-          preview &&
           input.daycareStartTime &&
           input.daycareEndTime &&
           input.daycareEndTime <= input.daycareStartTime
@@ -139,10 +141,10 @@ export function HotelEstimatePage({ preview = false }: { preview?: boolean }) {
         return { canSubmit: false, guide: '宿泊日程を選んでください' };
       }
       if (dateError) return { canSubmit: false, guide: null };
-      if (preview && (!input.checkInTime || !input.checkOutTime)) {
+      if (!input.checkInTime || !input.checkOutTime) {
         return { canSubmit: false, guide: 'チェックイン・チェックアウト時刻を選んでください' };
       }
-      if (preview && input.checkOutTime && !input.pickupSlot) {
+      if (input.checkOutTime && !input.pickupSlot) {
         return { canSubmit: false, guide: 'お迎え時刻は22:00までを選んでください' };
       }
       if (!input.pickupSlot) {
@@ -160,7 +162,7 @@ export function HotelEstimatePage({ preview = false }: { preview?: boolean }) {
       if (pg) return { canSubmit: false, guide: pg };
     }
     return base;
-  }, [input, result, dateError, preview]);
+  }, [input, result, dateError]);
 
   const handleSubmit = async () => {
     if (!canSubmit || !agreed || sending) return;
@@ -220,7 +222,7 @@ export function HotelEstimatePage({ preview = false }: { preview?: boolean }) {
             input={input}
             dateError={dateError}
             onChange={patch}
-            enableExactTimes={preview}
+            enableExactTimes
           />
         )}
 
@@ -262,6 +264,10 @@ export function HotelEstimatePage({ preview = false }: { preview?: boolean }) {
             <p>
               <span className="font-bold text-gray-600">{CANCEL_TITLE}</span>
               ｜{cancelNote(perNightOf(input.size), isFromPrice(input.size))}
+            </p>
+            <p className="mt-3">
+              <span className="font-bold text-gray-600">{REFUND_TITLE}</span>
+              ｜{REFUND_NOTE}
             </p>
           </div>
         )}

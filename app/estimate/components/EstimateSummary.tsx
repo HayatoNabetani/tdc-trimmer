@@ -110,7 +110,7 @@ export function EstimateSummary({
           </div>
         )}
 
-        {/* 誤送信防止：内容確認のチェックを入れて初めて送信できる */}
+        {/* 内容・キャンセル規定・返金についての確認を必須にする */}
         {canSubmit && (
           <label className="mb-3 flex items-start gap-2.5 rounded-lg bg-gray-50 p-3">
             <input
@@ -121,8 +121,8 @@ export function EstimateSummary({
             />
             <span className="text-sm font-medium text-gray-700">
               {result.needsContact
-                ? '上記の内容で相談する'
-                : '見積もり内容を確認しました'}
+                ? '相談内容・キャンセル規定・返金についてを読み、確認しました'
+                : '見積もり内容・キャンセル規定・返金についてを読み、確認しました'}
             </span>
           </label>
         )}

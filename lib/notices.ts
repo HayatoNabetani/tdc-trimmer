@@ -15,5 +15,9 @@ export function cancelNote(perNight: number | null, isFrom = false): string {
   return `ご利用日の7日前まで：キャンセル料として${portion}を申し受けます。`;
 }
 
+export const REFUND_TITLE = '返金について';
+export const REFUND_NOTE =
+  'ご利用料金は、いかなる理由でも返金いたしかねます。ご予約日程の短縮や、予定より早いお迎えによって未利用となった日数・時間分についても、返金は行いません。';
+
 export const ESTIMATE_FOOTER =
   '※こちらは概算です。正式なお見積もり・空き状況はスタッフよりご案内します。';

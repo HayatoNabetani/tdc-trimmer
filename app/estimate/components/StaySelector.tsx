@@ -36,7 +36,15 @@ export function StaySelector({
 }: Props) {
   const { stayType } = input;
   // 大型犬は日帰りなし → 宿泊のみ
-  const daycareAvailable = input.size !== 'large';
+  const daycareAvailable = enableExactTimes || input.size !== 'large';
+  const selectDaycare = () => onChange({
+    stayType: 'daycare',
+    ...(enableExactTimes ? {
+      daycareDate: input.checkIn || input.daycareDate,
+      daycareStartTime: input.checkInTime || input.daycareStartTime,
+      daycareEndTime: input.checkOutTime || input.daycareEndTime,
+    } : {}),
+  });
 
   return (
     <section>
@@ -53,9 +61,9 @@ export function StaySelector({
           <button
             type="button"
             className={tabClass(stayType === 'daycare')}
-            onClick={() => onChange({ stayType: 'daycare' })}
+            onClick={selectDaycare}
           >
-            日帰り
+            {enableExactTimes ? '当日お預かり（日帰り）' : '日帰り'}
           </button>
           <button
             type="button"
@@ -65,6 +73,20 @@ export function StaySelector({
             宿泊
           </button>
         </div>
+      )}
+
+      {enableExactTimes && stayType === 'overnight' && input.checkIn && input.checkIn === input.checkOut && (
+        <div className="mb-4 rounded-lg bg-blue-50 p-3 text-sm text-blue-800">
+          <p>当日中のお迎えは「当日お預かり（日帰り）」をご利用ください。</p>
+          <button type="button" onClick={selectDaycare} className="mt-2 font-bold underline">
+            入力した日時で日帰りに切り替える
+          </button>
+        </div>
+      )}
+      {enableExactTimes && stayType === 'daycare' && input.size === 'large' && (
+        <p className="mb-4 rounded-lg bg-blue-50 p-3 text-sm text-blue-800">
+          大型犬の当日お預かりは要お問い合わせです。ご希望日時を選んでご相談ください。
+        </p>
       )}
 
       {stayType === 'daycare' && daycareAvailable ? (
@@ -167,6 +189,8 @@ function OvernightFields({
               label="チェックイン時刻"
               value={input.checkInTime ?? ''}
               onChange={(checkInTime) => onChange({ checkInTime })}
+              min="10:00"
+              max="17:00"
               compact
             />
           )}
@@ -195,6 +219,7 @@ function OvernightFields({
                 })
               }
               compact
+              min="10:00"
               max="22:00"
             />
           )}
