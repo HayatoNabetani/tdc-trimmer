@@ -1,6 +1,19 @@
 // トリミング見積もりの料金モデル・計算（クライアント提供の料金表より・すべて税込）
 
 import type { PrepayFields } from './types';
+import { isValid, parseISO, format } from 'date-fns';
+
+export type TrimStore = 'main' | 'futakotama';
+export const TRIM_STORES: Record<TrimStore, { label: string; closedDays: number[]; closedLabel: string }> = {
+  main: { label: '本店', closedDays: [1, 5], closedLabel: '月曜・金曜' },
+  futakotama: { label: '二子玉店', closedDays: [1, 4], closedLabel: '月曜・木曜' },
+};
+
+export function isTrimDateAvailable(store: TrimStore, date: string, today: string): boolean {
+  const parsed = parseISO(date);
+  return isValid(parsed) && format(parsed, 'yyyy-MM-dd') === date && date >= today &&
+    !TRIM_STORES[store].closedDays.includes(parsed.getDay());
+}
 
 export type TrimSize = 'small' | 'medium' | 'large' | 'other';
 export type LargeType = 'miniature' | 'medium' | 'standard';
@@ -28,6 +41,7 @@ export interface TrimPref {
 export const PREF_COUNT = 3;
 
 export interface TrimInput extends PrepayFields {
+  store?: TrimStore;
   size: TrimSize | null;
   largeType?: LargeType; // 大型犬のみ
   course: TrimCourse;

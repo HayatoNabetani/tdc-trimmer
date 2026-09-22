@@ -8,8 +8,12 @@ import {
   sendTextMessage,
 } from '@/lib/liff';
 import { format } from 'date-fns';
+import { BookingCalendar } from './components/BookingCalendar';
 import {
   calcTrim,
+  TRIM_STORES,
+  isTrimDateAvailable,
+  type TrimStore,
   COURSE_DESC,
   COURSE_LABELS,
   DEFAULT_TIME_SLOT,
@@ -52,6 +56,14 @@ export function TrimmingEstimatePage({ preview = false }: { preview?: boolean })
   const [toast, setToast] = useState<string | null>(null);
   const [agreed, setAgreed] = useState(false);
   const [prefRows, setPrefRows] = useState(1); // 表示中の希望日行数（第1のみから増やせる）
+
+  // URLは初期選択にのみ使用し、その後のお客様による店舗変更を優先する。
+  useEffect(() => {
+    const store = new URLSearchParams(window.location.search).get('store');
+    if (store === 'main' || store === 'futakotama') {
+      setInput((prev) => ({ ...prev, store: prev.store ?? store }));
+    }
+  }, []);
 
   useEffect(() => {
     setAgreed(false);
@@ -115,6 +127,7 @@ export function TrimmingEstimatePage({ preview = false }: { preview?: boolean })
 
   // 第i希望（date/time）を更新
   const setPref = (i: number, p: Partial<TrimPref>) => {
+    if (p.date && (!input.store || !isTrimDateAvailable(input.store, p.date, today()))) return;
     const prefs: TrimPref[] = Array.from(
       { length: PREF_COUNT },
       (_, idx) => input.prefs?.[idx] ?? {},
@@ -124,6 +137,12 @@ export function TrimmingEstimatePage({ preview = false }: { preview?: boolean })
   };
 
   const { canSubmit, guide } = useMemo(() => {
+    if (!input.store) {
+      return { canSubmit: false, guide: 'ご利用店舗を選んでください' };
+    }
+    if (input.prefs?.some((pref) => pref.date && !isTrimDateAvailable(input.store!, pref.date, today()))) {
+      return { canSubmit: false, guide: '定休日・過去日を除いて希望日を選び直してください' };
+    }
     if (!input.size) {
       return { canSubmit: false, guide: 'ワンちゃんのサイズを選んでください' };
     }
@@ -196,6 +215,25 @@ export function TrimmingEstimatePage({ preview = false }: { preview?: boolean })
       )}
 
       <div className="flex-1 space-y-6 px-4 pb-4 pt-5">
+        <section>
+          <h2 className="mb-3 text-base font-bold text-gray-800">
+            ご利用店舗
+            <span className="ml-2 text-xs font-normal text-red-500">必須</span>
+          </h2>
+          <div className="grid grid-cols-2 gap-3">
+            {(Object.keys(TRIM_STORES) as TrimStore[]).map((store) => (
+              <Card key={store} active={input.store === store}
+                title={TRIM_STORES[store].label} note={`定休日：${TRIM_STORES[store].closedLabel}`}
+                onClick={() => {
+                  const cleared = input.prefs?.some((pref) => pref.date && !isTrimDateAvailable(store, pref.date, today()));
+                  patch({ store, prefs: input.prefs?.map((pref) =>
+                    pref.date && !isTrimDateAvailable(store, pref.date, today()) ? {} : pref,
+                  ) });
+                  setToast(cleared ? '店舗変更により、定休日にあたる希望日を解除しました。希望日を選び直してください。' : null);
+                }} />
+            ))}
+          </div>
+        </section>
         {/* ① サイズ */}
         <section>
           <h2 className="mb-3 text-base font-bold text-gray-800">
@@ -322,12 +360,11 @@ export function TrimmingEstimatePage({ preview = false }: { preview?: boolean })
                         </button>
                       )}
                     </div>
-                    <input
-                      type="date"
+                    <BookingCalendar
+                      label={`第${i + 1}希望日`}
+                      store={input.store}
                       value={pref.date ?? ''}
-                      min={today()}
-                      onChange={(e) => setPref(i, { date: e.target.value })}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-800 focus:border-[#06c755] focus:outline-none"
+                      onChange={(date) => setPref(i, { date })}
                     />
                     <div className="mt-2 grid grid-cols-2 gap-2">
                       {TIME_SLOTS.map((slot) => (

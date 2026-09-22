@@ -3,6 +3,7 @@
 import { format, parseISO } from 'date-fns';
 import {
   COURSE_DESC,
+  TRIM_STORES,
   LARGE_TYPE_LABELS,
   TIME_SLOT_LABELS,
   TRIM_SIZE_LABELS,
@@ -57,6 +58,7 @@ export function buildTrimMessage(input: TrimInput, result: TrimResult): string {
         : '13歳以上／健康に不安があるため、トリミング可否を相談したいです。';
     return [
       '【トリミングのご相談】',
+      ...(input.store ? [`🏠 ご利用店舗：${TRIM_STORES[input.store].label}`] : []),
       `🐶 ワンちゃんのサイズ：${sizeLabel || '—'}`,
       reason,
       'ご希望のスタイル・日程など、追ってメッセージします。',
@@ -73,6 +75,7 @@ export function buildTrimMessage(input: TrimInput, result: TrimResult): string {
 
   const lines: string[] = [
     '【トリミング ご予約リクエスト】',
+    ...(input.store ? [`🏠 ご利用店舗：${TRIM_STORES[input.store].label}`] : []),
     `🐶 ワンちゃんのサイズ：${sizeLabel}${largeType}`,
     `✂️ コース：${result.courseLabel}`,
     `　（${COURSE_DESC[input.course]}）`,
