@@ -49,6 +49,7 @@ const COURSES: TrimCourse[] = ['shampoo', 'trimming', 'single'];
 
 export function TrimmingEstimatePage({ preview = false }: { preview?: boolean }) {
   const [input, setInput] = useState<TrimInput>(INITIAL);
+  const [fixedStore, setFixedStore] = useState<TrimStore | null>(null);
   const [liffStatus, setLiffStatus] = useState<LiffStatus>('loading');
   const [liffError, setLiffError] = useState<string | null>(null);
   const [inClient, setInClient] = useState(false);
@@ -57,11 +58,12 @@ export function TrimmingEstimatePage({ preview = false }: { preview?: boolean })
   const [agreed, setAgreed] = useState(false);
   const [prefRows, setPrefRows] = useState(1); // 表示中の希望日行数（第1のみから増やせる）
 
-  // URLは初期選択にのみ使用し、その後のお客様による店舗変更を優先する。
+  // 有効な店舗指定がある場合は、その店舗に固定する。
   useEffect(() => {
     const store = new URLSearchParams(window.location.search).get('store');
     if (store === 'main' || store === 'futakotama') {
-      setInput((prev) => ({ ...prev, store: prev.store ?? store }));
+      setFixedStore(store);
+      setInput((prev) => ({ ...prev, store }));
     }
   }, []);
 
@@ -215,7 +217,13 @@ export function TrimmingEstimatePage({ preview = false }: { preview?: boolean })
       )}
 
       <div className="flex-1 space-y-6 px-4 pb-4 pt-5">
-        <section>
+        {fixedStore ? (
+          <p className="text-xs text-gray-500">
+            ご利用店舗：<span className="font-medium text-gray-700">{TRIM_STORES[fixedStore].label}</span>
+            <span className="ml-2">（定休日：{TRIM_STORES[fixedStore].closedLabel}）</span>
+          </p>
+        ) : (
+          <section>
           <h2 className="mb-3 text-base font-bold text-gray-800">
             ご利用店舗
             <span className="ml-2 text-xs font-normal text-red-500">必須</span>
@@ -233,7 +241,8 @@ export function TrimmingEstimatePage({ preview = false }: { preview?: boolean })
                 }} />
             ))}
           </div>
-        </section>
+          </section>
+        )}
         {/* ① サイズ */}
         <section>
           <h2 className="mb-3 text-base font-bold text-gray-800">
