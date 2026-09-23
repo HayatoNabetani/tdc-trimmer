@@ -4,7 +4,7 @@
 // 「終了(end)」は その日を最後の宿泊日として含む（inclusive）。
 // 重なり判定は start <= 宿泊日 <= end。
 //
-// ※ 年は 2026 で設定。年が変わる場合はここを更新する。
+// ※ 対象期間は年を含めて指定。新しい期間はここに追加する。
 // ※ 日帰りには同額を加算。半日加算には特別料金を適用しない。
 
 import type { SpecialPeriod } from './types';
@@ -31,6 +31,13 @@ export const SPECIAL_PERIODS: SpecialPeriod[] = [
     name: '特別料金',
     start: '2026-09-19',
     end: '2026-09-23',
+    surcharge: SURCHARGE_550,
+  },
+  {
+    id: 'special-2026-2027-new-year',
+    name: '特別料金',
+    start: '2026-12-28',
+    end: '2027-01-04',
     surcharge: SURCHARGE_550,
   },
 ];
